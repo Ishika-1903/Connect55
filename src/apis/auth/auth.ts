@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import {apiClient} from '../apiConfig';
 import {UserProfile} from './types';
 
@@ -35,26 +36,43 @@ export const getUserData = async (id: string) => {
   }
 };
 
+export const logFormData = (formData: FormData) => {
+  const formDataIterator = formData as any; // Type assertion to avoid errors
+
+  for (let i = 0; i < formDataIterator.length; i++) {
+    const key = formDataIterator[i][0];
+    const value = formDataIterator[i][1];
+    console.log(`${key}: ${value}`);
+  }
+};
 export const updateUserProfile = async (
   id: string,
   name: string,
   bio: string,
   department: string,
   skills: string[],
- profilePicture: File | null,
+  profilePicture: { uri: string; name: string; type: string; size: number } | null,
   workLocation: string | null,
   designation: string | null,
 ): Promise<UserProfile> => {
+
   try {
     const formData = new FormData();
     formData.append('name', name);
     formData.append('bio', bio);
     formData.append('department', department);
     formData.append('skills', JSON.stringify(skills));
-    formData.append('profilePicture', profilePicture);
+    //formData.append('profilePicture', profilePicture);
+    if (profilePicture && profilePicture.uri) {
+      formData.append('profilePicture', {
+        uri: profilePicture.uri,
+        type: profilePicture.type || 'image/jpg',  
+        name: profilePicture.name || 'profile_picture.jpg',  
+      });
+    }
     formData.append('workLocation', workLocation);
     formData.append('designation', designation);
-
+    console.log("formDataaaa", formData.getParts())
     const response = await apiClient.patch(`/users/update/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -65,6 +83,8 @@ export const updateUserProfile = async (
 
     const updatedProfile: UserProfile = response.data.data;
     console.log('Profile updated successfully:', updatedProfile);
+    console.log('profilePictureeeeee', profilePicture);
+
     return updatedProfile;
   } catch (error: any) {
     throw new Error(error);

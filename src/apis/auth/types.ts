@@ -22,6 +22,6 @@ export type UserProfile = {
   department: string;
   skills: string[];
   workLocation: string | null;
-  profilePicture: string;  
+  profilePicture: { uri: string; name: string; type: string; size: number };
   __v: number;
 }

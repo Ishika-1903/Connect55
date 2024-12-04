@@ -14,16 +14,20 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {CustomModal} from '../../components/CustomModal/CustomModal';
 import {TCText} from '../../components/text/CustomText';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
 import {data, skills} from '../../utils/dummyData';
 import {PrivateNavigatorParamList} from '../../routes/navigation/navigators';
 import {StackNavigationProp} from '@react-navigation/stack';
-import { Strings } from '../../utils/constants/strings';
+import {Strings} from '../../utils/constants/strings';
+import {getUserData} from '../../apis/auth/auth';
 
 type ProfileScreenNavigationProp =
   StackNavigationProp<PrivateNavigatorParamList>;
 const ProfilePage: React.FC = () => {
+  const route = useRoute();
+  const {userId} = route.params;
+  console.log('ussssss', userId);
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [visible, setVisible] = React.useState(false);
   const [showAllSkills, setShowAllSkills] = useState(false);
@@ -40,6 +44,33 @@ const ProfilePage: React.FC = () => {
   };
 
   const containerStyle = {backgroundColor: 'yellow', padding: 20};
+
+  const [userData, setUserData] = useState<{
+    profilePicture: string;
+    name: string;
+    bio: string;
+    designation: string;
+    department: string;
+    workLocation: string;
+    skills: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await getUserData(userId);
+        if (response.success) {
+          setUserData(response.data); // Set user data
+        } else {
+          console.error('Failed to fetch user data:', response.message);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [userId]);
 
   const shuffleArray = (array: string[]) => {
     let shuffledArray = [...array];
@@ -59,6 +90,12 @@ const ProfilePage: React.FC = () => {
     setShuffledSkills(shuffleArray(skills));
   }, []);
 
+  const baseURL =
+    'https://35a5-2401-4900-883e-e48f-9517-c795-1f07-4cb4.ngrok-free.app';
+  const profilePictureURL = userData?.profilePicture
+    ? `${baseURL}${userData.profilePicture}`
+    : null;
+
   const tabs = [
     {icon: 'home', onPress: () => console.log('Home pressed')},
     {icon: 'search', onPress: () => navigation.navigate('Search')},
@@ -66,7 +103,7 @@ const ProfilePage: React.FC = () => {
     {
       icon: 'email',
       onPress: () => navigation.navigate('ChatList'),
-      unreadCount: unreadCount, 
+      unreadCount: unreadCount,
     },
     {icon: 'campaign', onPress: () => navigation.navigate('Announcement')},
     {icon: 'person', onPress: () => navigation.navigate('Profile')},
@@ -82,7 +119,17 @@ const ProfilePage: React.FC = () => {
             </TouchableOpacity>
           </View>
           <View style={styles.profileImageContainer}>
-            <Image source={Icons.profilePicture1} style={styles.profileImage} />
+            {profilePictureURL ? (
+              <Image
+                source={{uri: profilePictureURL}}
+                style={styles.profileImage}
+              />
+            ) : (
+              <Image
+                source={Icons.profilePicture1}
+                style={styles.profileImage}
+              />
+            )}
           </View>
         </LinearGradient>
         <View style={styles.editIcon}>
@@ -92,19 +139,25 @@ const ProfilePage: React.FC = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.detailsContainer}>
-          <TCText style={styles.name}>Ishika Shahaney</TCText>
+          <TCText style={styles.name}>{userData?.name || 'N/A'}</TCText>
           <TCText style={styles.bio}>
-            Innovator, Passionate, Solution Driven
+            {userData?.bio || 'No bio available'}
           </TCText>
 
           <TCText style={styles.designation}>
-            Software Engineer, Mobile & Apps
+            {`${userData?.designation || 'N/A'}, ${
+              userData?.department || 'N/A'
+            }`}
           </TCText>
 
-          <TCText style={styles.location}>📍 Indore</TCText>
+          <TCText style={styles.location}>
+            📍 {userData?.workLocation || 'N/A'}
+          </TCText>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('IndividualChatScreen')}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('IndividualChatScreen')}>
               <MaterialIcons
                 name="message"
                 size={24}
@@ -121,13 +174,11 @@ const ProfilePage: React.FC = () => {
           <View style={styles.skillsBox}>
             <TCText style={styles.sectionTitle}>SKILLS</TCText>
             <View style={styles.skillsContainer}>
-              {shuffledSkills
-                .slice(0, showAllSkills ? shuffledSkills.length : 4)
-                .map((skill, index) => (
-                  <View key={index} style={styles.skillTab}>
-                    <TCText style={styles.skillText}>{skill}</TCText>
-                  </View>
-                ))}
+              {userData?.skills?.map((skill, index) => (
+                <View key={index} style={styles.skillTab}>
+                  <TCText style={styles.skillText}>{skill}</TCText>
+                </View>
+              )) || <TCText style={styles.bio}>No skills available</TCText>}
             </View>
             {shuffledSkills.length > 4 && (
               <TouchableOpacity

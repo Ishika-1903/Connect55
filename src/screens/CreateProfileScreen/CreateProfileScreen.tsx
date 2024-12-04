@@ -23,9 +23,13 @@ import {
   launchCamera,
   launchImageLibrary,
 } from 'react-native-image-picker';
-import {getOrganisationData, getUserData, updateUserProfile} from '../../apis/auth/auth';
+import {
+  getOrganisationData,
+  getUserData,
+  updateUserProfile,
+} from '../../apis/auth/auth';
 import {CustomModal} from '../../components/CustomModal/CustomModal';
-import { styles } from './CreateProfileScreen.styles';
+import {styles} from './CreateProfileScreen.styles';
 
 type CreateProfileScreenNavigationProp = StackNavigationProp<
   PrivateNavigatorParamList,
@@ -45,9 +49,14 @@ const CreateProfileScreen = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
     null,
   );
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]); 
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedDesignation, setSelectedDesignation] = useState('');
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [profilePicture, setProfilePicture] = useState<{
+    uri: string;
+    name: string;
+    type: string;
+    size: number;
+  } | null>(null);
 
   const [skillsData, setSkillsData] = useState<DropDownItem[]>([]);
   const [departmentsData, setDepartmentsData] = useState<DropDownItem[]>([]);
@@ -55,10 +64,7 @@ const CreateProfileScreen = () => {
   const [isModalVisible, setModalVisible] = useState(false);
 
   const route = useRoute();
-  const { userId, userEmail} = route.params;
-  console.log('userrrrrid', userId)
-  console.log('userEmail', userEmail)
-
+  const {userId, userEmail} = route.params;
   const handleCameraLaunch = () => {
     const options: CameraOptions = {
       mediaType: 'photo',
@@ -74,7 +80,19 @@ const CreateProfileScreen = () => {
         console.log('Camera Error: ', response.errorCode);
       } else {
         const imageUri = response.assets?.[0]?.uri;
-        setProfilePicture(imageUri || null);
+        const imageName =
+          response.assets?.[0]?.fileName || 'profile_picture.jpg';
+        const imageType = response.assets?.[0]?.type || 'image/jpeg';
+        const imageSize = response.assets?.[0]?.fileSize || 0;
+
+        if (imageUri) {
+          setProfilePicture({
+            uri: imageUri,
+            name: imageName,
+            type: imageType,
+            size: imageSize,
+          });
+        }
       }
       setModalVisible(false);
     });
@@ -95,7 +113,19 @@ const CreateProfileScreen = () => {
         console.log('Gallery Error: ', response.errorCode);
       } else {
         const imageUri = response.assets?.[0]?.uri;
-        setProfilePicture(imageUri || null);
+        const imageName =
+          response.assets?.[0]?.fileName || 'profile_picture.jpg';
+        const imageType = response.assets?.[0]?.type || 'image/jpeg';
+        const imageSize = response.assets?.[0]?.fileSize || 0;
+
+        if (imageUri) {
+          setProfilePicture({
+            uri: imageUri,
+            name: imageName,
+            type: imageType,
+            size: imageSize,
+          });
+        }
       }
       setModalVisible(false);
     });
@@ -137,19 +167,6 @@ const CreateProfileScreen = () => {
     fetchOrganisationData();
   }, []);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userData = await getUserData(userId);
-        console.log('Fetched user data:', userData);
-      } catch (error: any) {
-        console.error('Error fetching user data:', error.message);
-      }
-    };
-  
-    fetchUserData();
-  }, [userId]);
-
   const saveProfile = async () => {
     console.log('Name:', name);
     console.log('Bio:', bio);
@@ -165,12 +182,12 @@ const CreateProfileScreen = () => {
         bio,
         selectedDepartment || '',
         selectedSkills,
-        profilePicture ? new File([profilePicture], 'profile.jpg') : null,
+        profilePicture,
         location,
         selectedDesignation,
       );
       console.log('Profile updated successfully:', updatedProfile);
-      navigation.navigate('Private', {screen: 'Home'});
+      navigation.navigate('Private', {screen: 'Profile',  params: { userId: userId },});
     } catch (error) {
       console.error(error);
     }
@@ -192,7 +209,11 @@ const CreateProfileScreen = () => {
           <View style={styles.profilePhotoWrapper}>
             {/* <Image source={Icons.profilePicture2} style={styles.profilePhoto} /> */}
             <Image
-              source={profilePicture ? {uri: profilePicture} : Icons.profilePicture11}
+              source={
+                profilePicture
+                  ? {uri: profilePicture.uri}
+                  : Icons.profilePicture1
+              }
               style={styles.profilePhoto}
             />
 
@@ -228,7 +249,7 @@ const CreateProfileScreen = () => {
                 placeholder="Tell us about yourself"
                 placeholderTextStyle={styles.placeholderColor}
                 value={bio}
-                onChangeText={text => setBio(text)} 
+                onChangeText={text => setBio(text)}
               />
 
               <TCText style={styles.label}>Email Address</TCText>
@@ -398,7 +419,7 @@ const CreateProfileScreen = () => {
                 placeholder="Indore"
                 value={location}
                 onChangeText={text => {
-                  console.log('Work Location changed:', text); 
+                  console.log('Work Location changed:', text);
                   setLocation(text);
                 }}
                 placeholderTextStyle={styles.placeholderColor}
@@ -414,9 +435,7 @@ const CreateProfileScreen = () => {
           </ScrollView>
         </View>
       </View>
-      <View>
-        
-      </View>
+      <View></View>
       <CustomModal
         title="Upload Profile Picture"
         visible={isModalVisible}
@@ -440,7 +459,5 @@ const CreateProfileScreen = () => {
     </ScrollView>
   );
 };
-
-
 
 export default CreateProfileScreen;

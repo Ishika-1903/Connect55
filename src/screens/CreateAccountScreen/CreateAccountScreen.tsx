@@ -53,11 +53,11 @@ const CreateAccountScreen: React.FC = () => {
       console.log();
 
       if (response?.data?._id) {
-        const {_id, email, password} = response.data;
+        const {_id, email} = response.data;
         console.log('Registration successful, User ID:', _id);
         console.log('Registration successful, Email:', email);
         console.log('Registration successful, Password:', password);
-        navigation.navigate('CreateProfile', { userId: _id, userEmail: email, userPassword: password });
+        navigation.navigate('CreateProfile', { userId: _id, userEmail: email});
       } else {
         throw new Error('User ID not found in the response.');
       }
