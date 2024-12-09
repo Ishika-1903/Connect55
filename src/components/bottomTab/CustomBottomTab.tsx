@@ -83,16 +83,17 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     alignItems: 'center',
-    paddingHorizontal: 15,
     paddingVertical: 20,
   },
   iconContainer: {
-    position: 'relative', // Allows badge positioning
+    marginHorizontal:20,
+    paddingHorizontal:10,
+    paddingVertical:15,
   },
   badge: {
     position: 'absolute',
-    top: -13,
-    right: -40,
+    top: -5,
+    right: -20,
     backgroundColor: 'red',
     borderRadius: 10,
     height: 18,

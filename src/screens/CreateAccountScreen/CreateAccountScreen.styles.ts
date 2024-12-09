@@ -70,11 +70,26 @@ export const styles = StyleSheet.create({
     color: Colors.darkGray,
     fontSize: 14,
   },
+  backArrow: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10,
+  },
   errorText: {
     color: "red",
     fontSize: 12,
     alignSelf: 'flex-start', 
     marginBottom:20,
+  },
+  backButtonContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 1,
+  },
+  backIcon: {
+    color: Colors.darkBlue,
   },
   signUpText: {
     color:Colors.darkBlue,

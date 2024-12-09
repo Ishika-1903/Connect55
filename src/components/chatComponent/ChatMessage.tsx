@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { Colors } from '../../utils/constants/colors';
+import {View, Text, StyleSheet, Image} from 'react-native';
+import {Colors} from '../../utils/constants/colors';
 
 type ChatMessageProps = {
   message: string;
   isSender: boolean;
   timestamp: string;
-  isGroupChat?: boolean; 
-  profilePicture?: { uri: string } | number;
+  isGroupChat?: boolean;
+  profilePicture?: {uri: string} | number;
 };
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -22,25 +22,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       style={[
         styles.messageContainer,
         isSender ? styles.senderContainer : styles.receiverContainer,
-      ]}
-    >
+      ]}>
       {!isSender && isGroupChat && profilePicture && (
         <Image source={profilePicture} style={styles.profilePicture} />
       )}
-
 
       <View
         style={[
           styles.messageBubble,
           isSender ? styles.senderBubble : styles.receiverBubble,
-        ]}
-      >
+        ]}>
         <Text
           style={[
             styles.messageText,
-            { color: isSender ? Colors.white : 'black' },
-          ]}
-        >
+            {color: isSender ? Colors.white : 'black'},
+          ]}>
           {message}
         </Text>
         <Text style={styles.timestamp}>{timestamp}</Text>
@@ -50,6 +46,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 };
 
 const styles = StyleSheet.create({
+  messageContent: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
   messageContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -63,32 +63,34 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     maxWidth: '75%',
-    padding: 5,
-    borderRadius: 15,
+    padding: 10,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   senderBubble: {
     backgroundColor: '#1F509A',
     marginRight: 10,
+    alignSelf: 'flex-end',
   },
   receiverBubble: {
     backgroundColor: Colors.gray,
     marginLeft: 10,
+    alignSelf: 'flex-start',
   },
   messageText: {
-    fontSize: 16,
+    fontSize: 14,
+    marginBottom: 5,
   },
   timestamp: {
     fontSize: 10,
-    color: 'gray',
+    color: Colors.darkGray,
     alignSelf: 'flex-end',
-    marginTop: 5,
   },
   profilePicture: {
     width: 30,
     height: 30,
     borderRadius: 20,
     marginHorizontal: 5,
-  
   },
 });
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import Icons from '../../utils/constants/Icons';
 import { Strings } from '../../utils/constants/strings';
 import { Colors } from '../../utils/constants/colors';
 import CustomButton from '../../components/buttons/CustomButton';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const OTPScreen: React.FC = () => {
   const [otp, setOtp] = useState('');
@@ -17,6 +18,11 @@ const OTPScreen: React.FC = () => {
 
   return (
     <View style={styles.screenContainer}>
+       <TouchableOpacity
+        style={styles.backArrow}
+        onPress={() => navigation.goBack()}>
+        <MaterialIcons name="arrow-back" size={24} color={Colors.darkBlue} />
+      </TouchableOpacity>
       <View style={styles.container}>
         <Image source={Icons.logo} style={styles.heading} />
         <CustomInputField
@@ -43,6 +49,12 @@ const styles = StyleSheet.create({
       flex: 1,
       backgroundColor: Colors.white,
       justifyContent: 'center',
+    },
+    backArrow: {
+      position: 'absolute',
+      top: 40,
+      left: 20,
+      zIndex: 10,
     },
     container: {
       padding: 20,

@@ -10,10 +10,10 @@ import {AppStackParamList} from '../../routes/navigation/navigators';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {Strings} from '../../utils/constants/strings';
 import CustomButton from '../../components/buttons/CustomButton';
-import { validateEmail } from '../../utils/utils';
+import {validateEmail} from '../../utils/utils';
+import {login} from '../../apis/auth/auth';
 
-type PublicNavigationProps =
-  NativeStackNavigationProp<AppStackParamList>;
+type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -24,21 +24,38 @@ const LoginScreen: React.FC = () => {
 
   const navigation = useNavigation<PublicNavigationProps>();
 
-  const handleSignIn = () => {
-    if (!validateEmail(email)) {
-      setEmailError('* Please enter a valid work email.');
-      return;
+  const handleSignIn = async () => {
+    //navigation.navigate('Private');
+    try {
+      setEmailError('');
+      setPasswordError('');
+
+      if (!email.trim()) {
+        setEmailError('* Email is required');
+        return;
+      }
+
+      if (!password.trim()) {
+        setPasswordError('Password is required');
+        return;
+      }
+
+      const response = await login(email, password);
+      console.log('Login Successful:', response.data);
+
+      navigation.navigate('Private');
+    } catch (error: any) {
+      if (error.message) {
+        if (error.message.toLowerCase().includes('email')) {
+          setEmailError(error.message);
+        } else if (error.message.toLowerCase().includes('password')) {
+          setPasswordError(error.message);
+        }
+      } else {
+        setEmailError('An error occurred. Please try again.');
+      }
+      console.log('Error during login:', error);
     }
-  
-    if (!password) {
-      setPasswordError('* Please enter your password.');
-      return;
-    }
-  
-    setEmailError(''); 
-    setPasswordError('');
-    navigation.navigate('Private');
-    console.log('Email and Password are valid!', {email, password});
   };
 
   const handleForgotPassword = () => {
@@ -58,7 +75,11 @@ const LoginScreen: React.FC = () => {
             lefticonStyle={{fontSize: 20}}
             placeholder="Enter email"
             placeholderTextStyle={{color: '#888'}}
-            textStyle={{fontSize: 16, marginVertical:10, color:Colors.darkBlue}}
+            textStyle={{
+              fontSize: 16,
+              marginVertical: 10,
+              color: Colors.darkBlue,
+            }}
             containerStyle={{backgroundColor: '#EFEFEF'}}
             value={email}
             onChangeText={text => {
@@ -68,11 +89,11 @@ const LoginScreen: React.FC = () => {
               }
             }}
           />
-        {emailError ? (
-            <TCText style={styles.errorText}>
-              {emailError}
-            </TCText>
-          ) : <View style={{height:20}}/>}
+          {emailError ? (
+            <TCText style={styles.errorText}>{emailError}</TCText>
+          ) : (
+            <View style={{height: 20}} />
+          )}
           <CustomInputField
             lefticon="lock"
             rightIcon={showPassword ? 'visibility-off' : 'visibility'}
@@ -81,20 +102,19 @@ const LoginScreen: React.FC = () => {
             placeholder="Enter your password"
             placeholderTextStyle={{color: '#888'}}
             secureTextEntry={!showPassword}
-            textStyle={{fontSize: 16, marginVertical:10, color:Colors.darkBlue}}
+            textStyle={{
+              fontSize: 16,
+              marginVertical: 10,
+              color: Colors.darkBlue,
+            }}
             containerStyle={{backgroundColor: '#EFEFEF'}}
             value={password}
             onChangeText={text => setPassword(text)}
           />
-           {passwordError ? (
-            <TCText style={styles.errorText}>
-              {passwordError}
-            </TCText>
+          {passwordError ? (
+            <TCText style={styles.errorText}>{passwordError}</TCText>
           ) : null}
         </View>
-
-        
-    
 
         <CustomButton
           text={Strings.SIGN_IN.toUpperCase()}

@@ -1,5 +1,5 @@
-import { StyleSheet } from 'react-native';
-import { Colors } from '../../utils/constants/colors';
+import {StyleSheet} from 'react-native';
+import {Colors} from '../../utils/constants/colors';
 
 export const styles = StyleSheet.create({
   container: {
@@ -102,6 +102,11 @@ export const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginVertical: 20,
   },
+  separatorLine: {
+    height: 1,
+    backgroundColor: Colors.darkBlue, 
+    marginVertical: 15, 
+  },
   scrollFormContainer: {
     paddingBottom: 20,
   },
@@ -111,6 +116,22 @@ export const styles = StyleSheet.create({
     color: Colors.darkBlue,
     letterSpacing: 1,
   },
+  passwordSectionContainer: {
+    padding: 12,
+    marginVertical: 4,
+    borderColor: Colors.darkBlue,
+    borderRadius: 8,
+
+    shadowColor: '#334257',
+    textShadowRadius: 20,
+    shadowOffset: {width: 0, height: 2},
+    backgroundColor: 'white',
+    borderWidth: 1,
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+
   skillsLabel: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -122,7 +143,7 @@ export const styles = StyleSheet.create({
     borderColor: Colors.darkBlue,
     borderBottomWidth: 1,
     paddingVertical: 8,
-    paddingHorizontal: 0, 
+    paddingHorizontal: 0,
     backgroundColor: '#fff',
     marginBottom: 30,
   },
@@ -130,10 +151,14 @@ export const styles = StyleSheet.create({
   placeholderColor: {
     color: '#aaa',
   },
-  containerStyle:{
-    width:'80%',
-    height:'20%',
-    backgroundColor:'#FBFBFB',
+  errorText: {
+    color: 'red',
+    fontSize: 10,
+    marginTop: 5,
+  },
+  containerStyle: {
+    width: '75%',
+    backgroundColor: '#FBFBFB',
   },
   placeholderTextStyle: {
     fontSize: 16,
@@ -142,16 +167,26 @@ export const styles = StyleSheet.create({
     color: Colors.darkBlue,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: Colors.white,
+    textAlign: 'center',
   },
+
+  changePasswordContainer: {
+    marginVertical: 20,
+  },
+
   button: {
     backgroundColor: Colors.darkBlue,
     borderRadius: 15,
     height: 50,
-    marginVertical: 20,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
   },
+
   dropdownWrapper: {
     marginVertical: 5,
   },
@@ -202,12 +237,46 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.darkBlue,
     borderRadius: 20,
     marginTop: 10,
-    width:'50%',
-    padding:12,
+    width: '50%',
+    padding: 12,
   },
   modalButtonText: {
     color: Colors.white,
     fontSize: 16,
+    textAlign: 'center',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 20,
+    paddingHorizontal: 10,
+  },
+  disabledButton: {
+    backgroundColor: Colors.gray, // Disabled background color
+    borderColor: Colors.darkGray, // Disabled border color
+    borderRadius: 15,
+    height: 50,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  disabledText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.darkBlue,
     textAlign: 'center',
   },
 });

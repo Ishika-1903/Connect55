@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { Colors } from '../../utils/constants/colors';
+import { useNavigation } from '@react-navigation/native';
 
 type ChatHeaderProps = {
   profilePictures: ImageSourcePropType[];
@@ -21,6 +22,7 @@ const CommonChatHeader: React.FC<ChatHeaderProps> = ({
   names,
   onBackPress,
 }) => {
+  const navigation = useNavigation();
   const renderProfilePictures = () => {
     const picturesToShow = profilePictures.slice(0, 4);
 
@@ -69,8 +71,8 @@ const CommonChatHeader: React.FC<ChatHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-        <MaterialIcons name="arrow-back" size={24} style={styles.backIcon} />
+      <TouchableOpacity onPress={onBackPress} style={styles.backButton} >
+        <MaterialIcons name="arrow-back" size={24} style={styles.backIcon} onPress={() => navigation.goBack()} />
       </TouchableOpacity>
       {renderProfilePictures()}
       <Text style={styles.name} numberOfLines={1}>

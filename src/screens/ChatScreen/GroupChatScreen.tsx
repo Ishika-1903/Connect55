@@ -13,7 +13,6 @@ import {Colors} from '../../utils/constants/colors';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import Icons from '../../utils/constants/Icons';
 import {useNavigation} from '@react-navigation/native';
-import IndividualChatHeader from '../../components/chatComponent/ChatHeader';
 import CommonChatHeader from '../../components/chatComponent/ChatHeader';
 import { Strings } from '../../utils/constants/strings';
 

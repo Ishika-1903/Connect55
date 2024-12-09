@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CommonHeader from '../../components/header/CommonHeader';
 import {TCText} from '../../components/text/CustomText';
 import {Strings} from '../../utils/constants/strings';
@@ -17,6 +17,16 @@ import {newChatData} from '../../utils/dummyData';
 
 const NewMessageScreen: React.FC = () => {
   const navigation = useNavigation();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredChatData = newChatData.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.bio.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleChatPress = (chatId) => {
+    navigation.navigate('IndividualChatScreen', { chatId });
+  };
 
   return (
     <View style={styles.container}>
@@ -24,7 +34,7 @@ const NewMessageScreen: React.FC = () => {
         <CommonHeader
           leftContent={
             <View style={styles.leftContent}>
-              <MaterialIcons name="arrow-back" size={25} style={styles.icon} />
+              <MaterialIcons name="arrow-back" size={25} style={styles.icon} onPress={() => navigation.goBack()}/>
               <TCText style={styles.heading}>
                 {Strings.NEW_MESSAGE.toUpperCase()}
               </TCText>
@@ -39,6 +49,8 @@ const NewMessageScreen: React.FC = () => {
           placeholderTextStyle={{color: Colors.darkBlue}}
           containerStyle={styles.inputField}
           textStyle={{color:Colors.darkBlue}}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
         />
       </View>
       <TouchableOpacity
@@ -56,16 +68,19 @@ const NewMessageScreen: React.FC = () => {
       </TouchableOpacity>
 
       <FlatList
-        data={newChatData}
+        data={filteredChatData}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
-          <View style={styles.chatItem}>
-            <Image source={item.profilePicture} style={styles.profilePicture} />
-            <View style={styles.chatDetails}>
-              <TCText style={styles.name}>{item.name}</TCText>
-              <TCText style={styles.bio}>{item.bio}</TCText>
-            </View>
+          <TouchableOpacity 
+          onPress={() => handleChatPress(item.id)}  // Handle item click
+          style={styles.chatItem}
+        >
+          <Image source={item.profilePicture} style={styles.profilePicture} />
+          <View style={styles.chatDetails}>
+            <TCText style={styles.name}>{item.name}</TCText>
+            <TCText style={styles.bio}>{item.bio}</TCText>
           </View>
+        </TouchableOpacity>
         )}
         contentContainerStyle={styles.listContainer}
       />

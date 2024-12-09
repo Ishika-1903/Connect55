@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -8,29 +8,30 @@ import {
   FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Colors } from '../../utils/constants/colors';
-import { State, TapGestureHandler } from 'react-native-gesture-handler';  
+import {Colors} from '../../utils/constants/colors';
+import {State, TapGestureHandler} from 'react-native-gesture-handler';
+import {useNavigation} from '@react-navigation/native';
 
-
-export const DoubleTap = ({ children }: any) => {
+export const DoubleTap = ({children}: any) => {
   const doubleTapRef = useRef(null);
 
   const onSingleTapEvent = (event: any) => {
     if (event.nativeEvent.state === State.ACTIVE) {
-      console.log("single tap 1");
+      console.log('single tap 1');
     }
   };
 
   const onDoubleTapEvent = (event: any) => {
     if (event.nativeEvent.state === State.ACTIVE) {
-       console.log("double tap 1");
+      console.log('double tap 1');
     }
   };
 
   return (
     <TapGestureHandler
       onHandlerStateChange={onSingleTapEvent}
-      waitFor={doubleTapRef}>
+      waitFor={doubleTapRef}
+      shouldCancelWhenOutside={true}>
       <TapGestureHandler
         ref={doubleTapRef}
         onHandlerStateChange={onDoubleTapEvent}
@@ -53,15 +54,16 @@ type PostSectionProps = {
   posts: Post[];
 };
 
-const PostSection: React.FC<PostSectionProps> = ({ posts }) => {
+const PostSection: React.FC<PostSectionProps> = ({posts}) => {
+  const navigation = useNavigation();
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const [showLikeIcon, setShowLikeIcon] = useState<string | null>(null); 
+  const [showLikeIcon, setShowLikeIcon] = useState<string | null>(null);
 
   const handleDoubleTap = (postId: string) => {
-    setLikedPosts((prevLikedPosts) => {
+    setLikedPosts(prevLikedPosts => {
       const updatedLikedPosts = new Set(prevLikedPosts);
       if (updatedLikedPosts.has(postId)) {
-        updatedLikedPosts.delete(postId); 
+        updatedLikedPosts.delete(postId);
       } else {
         updatedLikedPosts.add(postId);
         setShowLikeIcon(postId);
@@ -70,36 +72,36 @@ const PostSection: React.FC<PostSectionProps> = ({ posts }) => {
     });
   };
 
-
   useEffect(() => {
     if (showLikeIcon) {
       const timer = setTimeout(() => {
-        setShowLikeIcon(null); 
-      }, 200); 
+        setShowLikeIcon(null);
+      }, 200);
 
       return () => clearTimeout(timer);
     }
   }, [showLikeIcon]);
 
-  const renderPost = ({ item }: { item: Post }) => {
+  const renderPost = ({item}: {item: Post}) => {
     const firstName = item.userName.split(' ')[0];
     const isLiked = likedPosts.has(item.id);
 
     return (
       <View style={styles.postSection}>
-        <View style={styles.postHeader}>
+        <TouchableOpacity
+          style={styles.postHeader}
+          onPress={() => navigation.navigate('Profile')}>
           <Image source={item.profilePicture} style={styles.profilePicture} />
           <Text style={styles.userName}>{item.userName}</Text>
-        </View>
+        </TouchableOpacity>
 
-        
         <DoubleTap>
           <TouchableOpacity
+            activeOpacity={1}
             style={styles.postImageContainer}
-            onPress={() => handleDoubleTap(item.id)} 
-          >
+            onPress={() => handleDoubleTap(item.id)}>
             <Image source={item.postImage} style={styles.postImage} />
-            {showLikeIcon === item.id && ( 
+            {showLikeIcon === item.id && (
               <Icon
                 name="favorite"
                 size={50}
@@ -116,17 +118,15 @@ const PostSection: React.FC<PostSectionProps> = ({ posts }) => {
         </View>
 
         <View style={styles.actions}>
-     
           <TouchableOpacity onPress={() => handleDoubleTap(item.id)}>
             <Icon
-              name={isLiked ? "favorite" : "favorite-border"} 
+              name={isLiked ? 'favorite' : 'favorite-border'}
               size={25}
-              color={isLiked ? Colors.darkBlue : '#333'} 
+              color={isLiked ? Colors.darkBlue : '#333'}
               style={styles.actionIcon}
             />
           </TouchableOpacity>
 
-   
           <TouchableOpacity>
             <Icon
               name="chat-bubble-outline"
@@ -153,7 +153,7 @@ const PostSection: React.FC<PostSectionProps> = ({ posts }) => {
       <FlatList
         data={posts}
         renderItem={renderPost}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.flatListContainer}
       />
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '40%',
     left: '40%',
-    transform: [{ scale: 1.5 }],
+    transform: [{scale: 1.5}],
   },
   captionSection: {
     flexDirection: 'row',
@@ -223,12 +223,11 @@ const styles = StyleSheet.create({
   },
   actionIcon: {
     marginHorizontal: 10,
-   
   },
-  sendIcon:{
-    transform: [{ rotate: '-20deg' }],
-    marginTop:-4
-  }
+  sendIcon: {
+    transform: [{rotate: '-20deg'}],
+    marginTop: -4,
+  },
 });
 
 export default PostSection;

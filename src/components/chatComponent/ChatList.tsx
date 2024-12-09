@@ -1,12 +1,5 @@
-import React, {useState} from 'react';
-import {
-  FlatList,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  Modal,
-} from 'react-native';
+import React, {useMemo, useState} from 'react';
+import {FlatList, View, StyleSheet, TouchableOpacity, Text} from 'react-native';
 import ChatItem from './ChatItem';
 import {useNavigation} from '@react-navigation/native';
 import {chatData, groupData} from '../../utils/dummyData';
@@ -18,16 +11,36 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import GroupChatItem from './GroupChatItem';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {CustomModal} from '../CustomModal/CustomModal';
-import { Strings } from '../../utils/constants/strings';
+import {Strings} from '../../utils/constants/strings';
 
 const ChatList: React.FC = () => {
   const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('DirectMessages'); // Change 'Personal' to 'DirectMessages'
+  const [activeTab, setActiveTab] = useState('DirectMessages');
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedChat, setSelectedChat] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pinnedData, setPinnedData] = useState([]);
 
-  
-  const dataToShow = activeTab === 'DirectMessages' ? chatData : groupData; // Change 'Personal' to 'DirectMessages'
+  const dataToShow = activeTab === 'DirectMessages' ? chatData : groupData;
+
+  const filteredData = useMemo(() => {
+    return dataToShow.filter(item => {
+      if (activeTab === 'DirectMessages') {
+        return item.name.toLowerCase().includes(searchQuery.toLowerCase());
+      } else if (activeTab === 'Groups') {
+        const groupNameMatches = item.groupName
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase());
+        const membersMatch = item.members.some(member =>
+          member.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+        return groupNameMatches || membersMatch;
+      }
+      return false;
+    });
+  }, [searchQuery, dataToShow, activeTab]);
+
+
   const [showSearchBar, setShowSearchBar] = useState(false);
 
   const handleLongPress = chat => {
@@ -40,16 +53,32 @@ const ChatList: React.FC = () => {
   };
 
   const pinChat = () => {
-    console.log('Chat pinned:', selectedChat);
-    closeModal();
+    if (selectedChat) {
+      // Update the selected chat's `isPinned` property
+      const updatedChatData = chatData.map((chat) =>
+        chat.id === selectedChat.id ? {...chat, isPinned: true} : chat,
+      );
+  
+      // Add the selected chat to the pinnedData state
+      setPinnedData([...pinnedData, {...selectedChat, isPinned: true}]);
+  
+      // Close modal
+      closeModal();
+    }
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <CommonHeader
           leftContent={
             <View style={styles.leftContent}>
-              <MaterialIcons name="arrow-back" size={25} style={styles.icon} onPress={()=>navigation.goBack()}/>
+              <MaterialIcons
+                name="arrow-back"
+                size={25}
+                style={styles.icon}
+                onPress={() => navigation.goBack()}
+              />
               <TCText style={styles.heading}>{Strings.CHATS}</TCText>
             </View>
           }
@@ -78,52 +107,56 @@ const ChatList: React.FC = () => {
             placeholder="Search"
             placeholderTextStyle={{color: Colors.darkBlue}}
             containerStyle={styles.inputField}
-            textStyle={{color:Colors.darkBlue}}
+            textStyle={{color: Colors.darkBlue}}
+            value={searchQuery}
+            onChangeText={text => setSearchQuery(text)}
           />
         </View>
       )}
 
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'DirectMessages' && styles.activeTab]} // Change 'Personal' to 'DirectMessages'
-          onPress={() => setActiveTab('DirectMessages')}> 
+          style={[
+            styles.tab,
+            activeTab === 'DirectMessages' && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab('DirectMessages')}>
           <Text
             style={[
               styles.tabText,
-              activeTab === 'DirectMessages' && styles.activeTabText, // Change 'Personal' to 'DirectMessages'
+              activeTab === 'DirectMessages' && styles.activeTabText, 
             ]}>
-           {Strings.DIRECT_MESSAGES}
+            {Strings.DIRECT_MESSAGES}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'Groups' && styles.activeTab]} // Change 'Work' to 'Groups'
+          style={[styles.tab, activeTab === 'Groups' && styles.activeTab]} 
           onPress={() => setActiveTab('Groups')}>
           <Text
             style={[
               styles.tabText,
-              activeTab === 'Groups' && styles.activeTabText, // Change 'Work' to 'Groups'
+              activeTab === 'Groups' && styles.activeTabText,
             ]}>
             {Strings.GROUPS}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'Groups' && styles.activeTab]} // Change 'Work' to 'Groups'
-          onPress={() => setActiveTab('Groups')}>
+          style={[styles.tab, activeTab === 'Pinned' && styles.activeTab]} 
+          onPress={() => setActiveTab('Pinned')}>
           <Text
             style={[
               styles.tabText,
-              activeTab === 'Groups' && styles.activeTabText, // Change 'Work' to 'Groups'
+              activeTab === 'Pinned' && styles.activeTabText, 
             ]}>
-         Pinned
+            Pinned
           </Text>
         </TouchableOpacity>
       </View>
-
       <FlatList
-        data={dataToShow}
+        data={activeTab === 'Pinned' ? groupData : filteredData}
         keyExtractor={item => item.id.toString()}
         renderItem={({item}) =>
-          activeTab === 'DirectMessages' ? ( // Change 'Personal' to 'DirectMessages'
+          activeTab === 'DirectMessages' ? (
             <ChatItem
               profilePicture={item.profilePicture}
               name={item.name}
@@ -186,14 +219,14 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   rightContent: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
   },
   heading: {
     color: Colors.darkBlue,
     fontSize: 20,
     letterSpacing: 1.5,
     fontWeight: 'bold',
-    left:5
+    left: 5,
   },
   inputFieldContainer: {
     flexDirection: 'row',
@@ -208,9 +241,9 @@ const styles = StyleSheet.create({
   icon: {
     color: Colors.darkBlue,
   },
-  searchIcon:{
+  searchIcon: {
     color: Colors.darkBlue,
-marginRight:20,
+    marginRight: 20,
   },
   modalOverlay: {
     flex: 1,
@@ -246,11 +279,10 @@ marginRight:20,
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 10,
-
   },
   tab: {
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.darkBlue,

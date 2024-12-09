@@ -19,6 +19,9 @@ const NewGroupChatScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
+  const [searchText, setSearchText] = useState('');
+  const [filteredData, setFilteredData] = useState(newChatData);
+
   const handleSelectionChange = (id: string, isSelected: boolean) => {
     if (isSelected) {
       setSelectedUsers(prevSelected => [...prevSelected, id]);
@@ -28,6 +31,15 @@ const NewGroupChatScreen: React.FC = () => {
       );
     }
   };
+
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+    const filtered = newChatData.filter(item =>
+      item.name.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredData(filtered);
+  };
+
   const handleModalButtonClick = (type: string) => {
     setGroupType(type);
     setError(null);
@@ -39,6 +51,7 @@ const NewGroupChatScreen: React.FC = () => {
       setError('*Please select a group type before proceeding.');
     }
   };
+
   return (
     <View style={styles.container}>
       {/* {isModalVisible && (
@@ -68,7 +81,7 @@ const NewGroupChatScreen: React.FC = () => {
         <CommonHeader
           leftContent={
             <View style={styles.leftContent}>
-              <MaterialIcons name="arrow-back" size={25} style={styles.icon} />
+              <MaterialIcons name="arrow-back" size={25} style={styles.icon} onPress={() => navigation.goBack()}/>
               <TCText style={styles.heading}>
                 {Strings.NEW_GROUP_CHAT.toUpperCase()}
               </TCText>
@@ -82,18 +95,23 @@ const NewGroupChatScreen: React.FC = () => {
           placeholder="Search"
           placeholderTextStyle={{color: Colors.darkBlue}}
           containerStyle={styles.inputField}
+          textStyle={{
+            color: Colors.darkBlue,
+          }}
+          value={searchText}
+          onChangeText={handleSearch}
         />
       </View>
       <View>
         <FlatList
-          data={newChatData}
+          data={filteredData}
           keyExtractor={item => item.id}
           renderItem={({item}) => (
             <CustomCheckboxItem
               profilePicture={item.profilePicture}
               name={item.name}
               bio={item.bio}
-              isSelected={false}
+              isSelected={selectedUsers.includes(item.id)}
               onSelectionChange={isSelected =>
                 handleSelectionChange(item.id, isSelected)
               }

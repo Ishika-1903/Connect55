@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+
 import {apiClient} from '../apiConfig';
 import {UserProfile} from './types';
 
@@ -26,6 +26,16 @@ export const getOrganisationData = async () => {
   }
 };
 
+export const login = async (email: string, password: string) => {
+  try {
+    const response = await apiClient.post('/users/login', {email, password});
+    console.log('login response', response);
+    return response;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message);
+  }
+};
+
 export const getUserData = async (id: string) => {
   try {
     const response = await apiClient.get(`/users/user-data/${id}`);
@@ -36,15 +46,7 @@ export const getUserData = async (id: string) => {
   }
 };
 
-export const logFormData = (formData: FormData) => {
-  const formDataIterator = formData as any; // Type assertion to avoid errors
 
-  for (let i = 0; i < formDataIterator.length; i++) {
-    const key = formDataIterator[i][0];
-    const value = formDataIterator[i][1];
-    console.log(`${key}: ${value}`);
-  }
-};
 export const updateUserProfile = async (
   id: string,
   name: string,
@@ -57,6 +59,7 @@ export const updateUserProfile = async (
 ): Promise<UserProfile> => {
 
   try {
+    
     const formData = new FormData();
     formData.append('name', name);
     formData.append('bio', bio);
@@ -76,6 +79,7 @@ export const updateUserProfile = async (
     const response = await apiClient.patch(`/users/update/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+       
       },
     });
 

@@ -180,21 +180,21 @@ export const posts = [
 ];
 
 export const chatData = [
-  {id: '1', profilePicture: Icons.profilePicture1, name: 'Ishika', lastMessage: 'Hello!', time: '2:00 PM', unreadCount: 2},
-  {id: '2', profilePicture: Icons.profilePicture2, name: 'Ayushi', lastMessage: 'See you soon.', time: '1:45 PM', unreadCount: 0},
-  {id: '3', profilePicture: Icons.profilePicture3, name: 'Rahul', lastMessage: 'Thanks!', time: '12:30 PM', unreadCount: 5},
-  {id: '4', profilePicture: Icons.profilePicture4, name: 'Ananya', lastMessage: 'Let’s catch up!', time: '11:00 AM', unreadCount: 1},
-  {id: '5', profilePicture: Icons.profilePicture5, name: 'Nisha', lastMessage: 'Good morning!', time: '10:00 AM', unreadCount: 3},
-  {id: '6', profilePicture: Icons.profilePicture6, name: 'Manish', lastMessage: 'Are you free today?', time: '9:30 AM', unreadCount: 0},
-  {id: '7', profilePicture: Icons.profilePicture7, name: 'Amit', lastMessage: 'Got the files you sent.', time: '8:45 AM', unreadCount: 4},
-  {id: '8', profilePicture: Icons.profilePicture8, name: 'Simran', lastMessage: 'Check the email I forwarded.', time: '8:00 AM', unreadCount: 2},
-  {id: '9', profilePicture: Icons.profilePicture9, name: 'Karan', lastMessage: 'Happy birthday!', time: '7:30 AM', unreadCount: 0},
-  {id: '10', profilePicture: Icons.profilePicture10, name: 'Deepak', lastMessage: 'Where is the report?', time: '7:00 AM', unreadCount: 6},
-  {id: '11', profilePicture: Icons.profilePicture11, name: 'Madhuri', lastMessage: 'Are we still meeting?', time: '6:30 AM', unreadCount: 1},
-  {id: '12', profilePicture: Icons.profilePicture1, name: 'Shivani', lastMessage: 'Got your message.', time: '6:00 AM', unreadCount: 0},
-  {id: '13', profilePicture: Icons.profilePicture2, name: 'Vikram', lastMessage: 'How are you doing?', time: '5:30 AM', unreadCount: 2},
-  {id: '14', profilePicture: Icons.profilePicture3, name: 'Pooja', lastMessage: 'See you at the event!', time: '5:00 AM', unreadCount: 0},
-  {id: '15', profilePicture: Icons.profilePicture4, name: 'Ravi', lastMessage: 'Let’s grab lunch today.', time: '4:30 AM', unreadCount: 5},
+  {id: '1', profilePicture: Icons.profilePicture1, name: 'Ishika', lastMessage: 'Hello!', time: '2:00 PM', unreadCount: 2, isPinned: false},
+  {id: '2', profilePicture: Icons.profilePicture2, name: 'Ayushi', lastMessage: 'See you soon.', time: '1:45 PM', unreadCount: 0, isPinned: false},
+  {id: '3', profilePicture: Icons.profilePicture3, name: 'Rahul', lastMessage: 'Thanks!', time: '12:30 PM', unreadCount: 5, isPinned: false},
+  {id: '4', profilePicture: Icons.profilePicture4, name: 'Ananya', lastMessage: 'Let’s catch up!', time: '11:00 AM', unreadCount: 1, isPinned: false},
+  {id: '5', profilePicture: Icons.profilePicture5, name: 'Nisha', lastMessage: 'Good morning!', time: '10:00 AM', unreadCount: 3, isPinned: false},
+  {id: '6', profilePicture: Icons.profilePicture6, name: 'Manish', lastMessage: 'Are you free today?', time: '9:30 AM', unreadCount: 0, isPinned: false},
+  {id: '7', profilePicture: Icons.profilePicture7, name: 'Amit', lastMessage: 'Got the files you sent.', time: '8:45 AM', unreadCount: 4, isPinned: false},
+  {id: '8', profilePicture: Icons.profilePicture8, name: 'Simran', lastMessage: 'Check the email I forwarded.', time: '8:00 AM', unreadCount: 2, isPinned: false},
+  {id: '9', profilePicture: Icons.profilePicture9, name: 'Karan', lastMessage: 'Happy birthday!', time: '7:30 AM', unreadCount: 0, isPinned: false},
+  {id: '10', profilePicture: Icons.profilePicture10, name: 'Deepak', lastMessage: 'Where is the report?', time: '7:00 AM', unreadCount: 6, isPinned: false},
+  {id: '11', profilePicture: Icons.profilePicture11, name: 'Madhuri', lastMessage: 'Are we still meeting?', time: '6:30 AM', unreadCount: 1, isPinned: false},
+  {id: '12', profilePicture: Icons.profilePicture1, name: 'Shivani', lastMessage: 'Got your message.', time: '6:00 AM', unreadCount: 0, isPinned: false},
+  {id: '13', profilePicture: Icons.profilePicture2, name: 'Vikram', lastMessage: 'How are you doing?', time: '5:30 AM', unreadCount: 2, isPinned: false},
+  {id: '14', profilePicture: Icons.profilePicture3, name: 'Pooja', lastMessage: 'See you at the event!', time: '5:00 AM', unreadCount: 0, isPinned: false},
+  {id: '15', profilePicture: Icons.profilePicture4, name: 'Ravi', lastMessage: 'Let’s grab lunch today.', time: '4:30 AM', unreadCount: 5, isPinned: false},
 ];
 
 export const groupData = [
@@ -319,6 +319,20 @@ export const groupData = [
   },
 ];
 
+export const pinnedData = [
+  {
+    id: 1,
+    groupName: 'Project Discussion',
+    members: [
+      {id: 1, name: 'Karan', profilePicture: Icons.profilePicture10},
+      {id: 2, name: 'Simran', profilePicture: Icons.profilePicture11},
+      {id: 3, name: 'Harsh', profilePicture: Icons.profilePicture1},
+    ],
+    lastMessage: 'Project deadline tomorrow.',
+    time: '7:45 AM',
+    unreadCount: 1,
+  },
+]
 
 export const newChatData = [
   {id: '1', profilePicture: Icons.profilePicture1, name: 'Ishika', bio: 'Passionate'},

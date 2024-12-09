@@ -10,6 +10,7 @@ export type PrivateNavigatorParamList ={
     NewMessage:undefined;
     NewGroupChat:undefined;
     GroupChatScreen:undefined;
+    Public: { screen: keyof PublicNavigatorParamList; params?: any };
 }
 
 export type PublicNavigatorParamList = {
@@ -29,6 +30,5 @@ export type AppStackParamList = {
     //Private: {count: number};
     Private:undefined;
     Public: undefined;
-    Drawer:undefined;
   };
   

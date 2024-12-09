@@ -1,37 +1,41 @@
 import React, {useState, useEffect} from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Image,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icons from '../../utils/constants/Icons';
 import {Colors} from '../../utils/constants/colors';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {CustomModal} from '../../components/CustomModal/CustomModal';
 import {TCText} from '../../components/text/CustomText';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
-import {data, skills} from '../../utils/dummyData';
-import {PrivateNavigatorParamList} from '../../routes/navigation/navigators';
+import {skills} from '../../utils/dummyData';
+import {
+  PrivateNavigatorParamList,
+} from '../../routes/navigation/navigators';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {Strings} from '../../utils/constants/strings';
 import {getUserData} from '../../apis/auth/auth';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../controller/store';
 
 type ProfileScreenNavigationProp =
   StackNavigationProp<PrivateNavigatorParamList>;
 const ProfilePage: React.FC = () => {
-  const route = useRoute();
-  const {userId} = route.params;
-  console.log('ussssss', userId);
+  const userId = useSelector((state: RootState) => state.auth.userId);
+
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [visible, setVisible] = React.useState(false);
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [unreadCount, setUnreadCount] = useState(5);
+
+  const [loading, setLoading] = useState(true);
 
   const showModal = () => {
     console.log('Show modal called');
@@ -42,8 +46,6 @@ const ProfilePage: React.FC = () => {
     console.log('Hide modal called');
     setVisible(false);
   };
-
-  const containerStyle = {backgroundColor: 'yellow', padding: 20};
 
   const [userData, setUserData] = useState<{
     profilePicture: string;
@@ -57,15 +59,26 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (!userId) {
+        console.error('User ID is missing in Profile Screen');
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await getUserData(userId);
+        console.log('helloooo', response);
         if (response.success) {
-          setUserData(response.data); // Set user data
+          setUserData(response.data);
         } else {
           console.error('Failed to fetch user data:', response.message);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        
+      }
+      finally{
+        setLoading(false);
       }
     };
 
@@ -91,13 +104,13 @@ const ProfilePage: React.FC = () => {
   }, []);
 
   const baseURL =
-    'https://35a5-2401-4900-883e-e48f-9517-c795-1f07-4cb4.ngrok-free.app';
+    'https://3c39-2401-4900-883e-6931-4d9e-1115-b990-ba42.ngrok-free.app';
   const profilePictureURL = userData?.profilePicture
     ? `${baseURL}${userData.profilePicture}`
     : null;
 
   const tabs = [
-    {icon: 'home', onPress: () => console.log('Home pressed')},
+    {icon: 'home', onPress: () => navigation.navigate('Home')},
     {icon: 'search', onPress: () => navigation.navigate('Search')},
     // {icon: 'add-box', onPress: () => console.log('Home pressed')},
     {
@@ -134,7 +147,11 @@ const ProfilePage: React.FC = () => {
         </LinearGradient>
         <View style={styles.editIcon}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('CreateProfile')}>
+            onPress={() =>
+              navigation.navigate('Public', {
+                screen: 'CreateProfile',
+              })
+            }>
             <MaterialIcons name="edit" size={28} color={Colors.darkBlue} />
           </TouchableOpacity>
         </View>
@@ -174,11 +191,13 @@ const ProfilePage: React.FC = () => {
           <View style={styles.skillsBox}>
             <TCText style={styles.sectionTitle}>SKILLS</TCText>
             <View style={styles.skillsContainer}>
-              {userData?.skills?.map((skill, index) => (
-                <View key={index} style={styles.skillTab}>
-                  <TCText style={styles.skillText}>{skill}</TCText>
-                </View>
-              )) || <TCText style={styles.bio}>No skills available</TCText>}
+    {(showAllSkills ? userData?.skills : userData?.skills?.slice(0, 4))?.map(
+      (skill, index) => (
+        <View key={index} style={styles.skillTab}>
+          <TCText style={styles.skillText}>{skill}</TCText>
+        </View>
+      )
+    ) || <TCText style={styles.bio}>No skills available</TCText>}
             </View>
             {shuffledSkills.length > 4 && (
               <TouchableOpacity
@@ -193,6 +212,12 @@ const ProfilePage: React.FC = () => {
         </View>
       </ScrollView>
 
+      {loading && (
+      <View style={styles.loadingOverlay}>
+        <ActivityIndicator size="large" color={Colors.darkBlue} />
+      </View>
+    )}
+    
       <CustomModal
         visible={visible}
         subTitle="Are you sure you want to logout ? "
@@ -408,6 +433,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.darkBlue,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    zIndex: 10,
   },
 });
 

@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, Image} from 'react-native';
+import {View, Image, ActivityIndicator, TouchableOpacity} from 'react-native';
 import {TCText} from '../../components/text/CustomText';
 import Icons from '../../utils/constants/Icons';
 import {useNavigation} from '@react-navigation/native';
@@ -10,11 +10,18 @@ import CustomButton from '../../components/buttons/CustomButton';
 import {validateEmail} from '../../utils/utils';
 import {styles} from './CreateAccountScreen.styles';
 import {Colors} from '../../utils/constants/colors';
-import {registerUser} from '../../apis/auth/auth';
+import {useDispatch} from 'react-redux';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { registerUser } from '../../apis/auth/auth';
+import { setToken, setUserId } from '../../controller/authSlice';
+import { saveToken } from '../../apis/apiConfig';
 
 type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
 
 const CreateAccountScreen: React.FC = () => {
+  const navigation = useNavigation<PublicNavigationProps>();
+  const dispatch = useDispatch();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,9 +32,9 @@ const CreateAccountScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const navigation = useNavigation<PublicNavigationProps>();
-
   const handleSignIn = async () => {
+    //navigation.navigate('CreateProfile');
+    if (loading) return;
     if (!validateEmail(email)) {
       setEmailError('* Please enter a valid work email.');
       return;
@@ -50,17 +57,19 @@ const CreateAccountScreen: React.FC = () => {
 
     try {
       const response = await registerUser(email, password);
-      console.log();
+      console.log('resssponssee of register', response);
+      const userId = response?.data?.userId;
+      const token = response?.data?.token;
+      console.log('userIdddd in createprofile', userId);
+      console.log('token in createprofile', token);
 
-      if (response?.data?._id) {
-        const {_id, email} = response.data;
-        console.log('Registration successful, User ID:', _id);
-        console.log('Registration successful, Email:', email);
-        console.log('Registration successful, Password:', password);
-        navigation.navigate('CreateProfile', { userId: _id, userEmail: email});
-      } else {
-        throw new Error('User ID not found in the response.');
-      }
+      dispatch(setUserId(userId));
+      dispatch(setToken(token));
+
+      await saveToken(token);
+
+      console.log('created account', response);
+      navigation.navigate('CreateProfile');
     } catch (error: any) {
       console.error('Registration failed:', error.message);
       setPasswordError(error.message);
@@ -71,8 +80,16 @@ const CreateAccountScreen: React.FC = () => {
 
   return (
     <View style={styles.screenContainer}>
+       <TouchableOpacity
+        style={styles.backArrow}
+        onPress={() => navigation.goBack()}>
+        <MaterialIcons name="arrow-back" size={24} color={Colors.darkBlue} />
+      </TouchableOpacity>
       <View style={styles.container}>
+
+
         <Image source={Icons.logo} style={styles.heading} />
+
         <View style={styles.inputContainer}>
           <CustomInputField
             lefticon="email"
@@ -137,13 +154,20 @@ const CreateAccountScreen: React.FC = () => {
           <TCText style={styles.errorText}>{confirmPasswordError}</TCText>
         ) : null}
 
-        <CustomButton
-          text={loading ? 'PROCEEDING...' : 'PROCEED'}
-          onPress={handleSignIn}
-          style={styles.signInButton}
-          textStyle={styles.signInText}
-          //disabled={loading}
-        />
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color={Colors.darkBlue}
+            style={{marginVertical: 20}}
+          />
+        ) : (
+          <CustomButton
+            text="PROCEED"
+            onPress={handleSignIn}
+            style={styles.signInButton}
+            textStyle={styles.signInText}
+          />
+        )}
       </View>
     </View>
   );

@@ -1,13 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Image,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Icons from '../../utils/constants/Icons';
-import {Colors} from '../../utils/constants/colors';
 import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
-import {TCText} from '../../components/text/CustomText';
 import {styles} from './AnnouncementScreen.styles';
 import PostSection from '../../components/postSection/PostSection';
 import CommonHeader from '../../components/header/CommonHeader';
@@ -45,12 +42,19 @@ const posts = [
 ];
 
 const AnnouncementScreen: React.FC = ({navigation}: any) => {
+  const [unreadCount, setUnreadCount] = useState(5);
   const tabs = [
     {icon: 'home', onPress: () => navigation.navigate('Home')},
     {icon: 'search', onPress: () => navigation.navigate('Search')},
-    {icon: 'add-box', onPress: () => console.log('New Post pressed')},
+    // {icon: 'add-box', onPress: () => console.log('New Post pressed')},
+    {
+      icon: 'email',
+      onPress: () => navigation.navigate('ChatList'),
+      unreadCount: unreadCount,
+    
+    },
     {icon: 'campaign', onPress: () => navigation.navigate('Announcement')},
-    {icon: 'person', onPress: () => console.log('Profile pressed')},
+    {icon: 'person', onPress: () => navigation.navigate('Profile')},
   ];
 
   return (
@@ -64,9 +68,9 @@ const AnnouncementScreen: React.FC = ({navigation}: any) => {
       <CustomBottomTab
         tabs={tabs}
         style={{
-          backgroundColor: Colors.darkBlue,
           color: 'white',
-          marginTop: 5,
+          position: 'absolute',
+          bottom: 0,
         }}
       />
     </View>

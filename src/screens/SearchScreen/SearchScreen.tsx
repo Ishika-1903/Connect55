@@ -37,7 +37,7 @@ const SearchScreen = () => {
     searchQuery === '' ? recentSearch.slice(0, 4) : filteredRecentSearch;
 
   const tabs = [
-    {icon: 'home', onPress: () => console.log('Home pressed')},
+    {icon: 'home', onPress: () => navigation.navigate('Home')},
     {icon: 'search', onPress: () => navigation.navigate('Search')},
     // {icon: 'add-box', onPress: () => console.log('Home pressed')},
     {

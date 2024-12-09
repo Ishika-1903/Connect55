@@ -5,7 +5,7 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CustomInputField from '../../components/inputField/CustomInputField';
@@ -14,7 +14,7 @@ import {Colors} from '../../utils/constants/colors';
 import {TCText} from '../../components/text/CustomText';
 import CustomButton from '../../components/buttons/CustomButton';
 import {Dropdown, MultiSelect} from 'react-native-element-dropdown';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {PrivateNavigatorParamList} from '../../routes/navigation/navigators';
 import {
@@ -30,6 +30,8 @@ import {
 } from '../../apis/auth/auth';
 import {CustomModal} from '../../components/CustomModal/CustomModal';
 import {styles} from './CreateProfileScreen.styles';
+import {RootState} from '../../controller/store';
+import {useSelector} from 'react-redux';
 
 type CreateProfileScreenNavigationProp = StackNavigationProp<
   PrivateNavigatorParamList,
@@ -43,6 +45,7 @@ type DropDownItem = {
 
 const CreateProfileScreen = () => {
   const navigation = useNavigation<CreateProfileScreenNavigationProp>();
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
@@ -63,8 +66,65 @@ const CreateProfileScreen = () => {
   const [designationsData, setDesignationsData] = useState<DropDownItem[]>([]);
   const [isModalVisible, setModalVisible] = useState(false);
 
-  const route = useRoute();
-  const {userId, userEmail} = route.params;
+  const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
+  const userId = useSelector((state: RootState) => state.auth.userId);
+  console.log('user id in profile screen', userId);
+  const baseURL =
+    'https://3c39-2401-4900-883e-6931-4d9e-1115-b990-ba42.ngrok-free.app';
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      console.log('Fetching user data on first load...');
+
+      if (!userId) {
+        console.error('User ID is missing in Profile Screen');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await getUserData(userId);
+
+        if (response?.data?.name) {
+          console.log('Returning user, fetching full data...');
+          setName(response.data.name || '');
+          setBio(response.data.bio || '');
+          setUserEmail(response.data.email || '');
+          setLocation(response.data.location || '');
+          setSelectedDepartment(response.data.department || '');
+          setSelectedSkills(response.data.skills || []);
+          setSelectedDesignation(response.data.designation || '');
+          setLocation(response.data.workLocation || '');
+          const profilePictureURL = response.data.profilePicture
+            ? `${baseURL}${response.data.profilePicture}`
+            : null;
+          setProfilePicture(
+            profilePictureURL ? {uri: profilePictureURL} : null,
+          );
+        } else {
+          console.log('First-time user, fetching minimal data (email only)...');
+          if (response?.data?.email) {
+            setUserEmail(response.data.email);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [userId]);
+
   const handleCameraLaunch = () => {
     const options: CameraOptions = {
       mediaType: 'photo',
@@ -137,6 +197,7 @@ const CreateProfileScreen = () => {
   useEffect(() => {
     const fetchOrganisationData = async () => {
       try {
+        setLoading(true);
         const response = await getOrganisationData();
         const {skills, departments, designations} = response.data;
         setSkillsData(
@@ -161,6 +222,8 @@ const CreateProfileScreen = () => {
         );
       } catch (error) {
         console.error('Error fetching organisation data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -168,6 +231,25 @@ const CreateProfileScreen = () => {
   }, []);
 
   const saveProfile = async () => {
+    //navigation.navigate('Private', {screen: 'Home'});
+
+    if (!userId) {
+      console.error('User ID is missing in create profile screen');
+      return;
+    }
+
+    if (
+      !name ||
+      !bio ||
+      !location ||
+      !selectedDepartment ||
+      !selectedSkills.length ||
+      !selectedDesignation ||
+      !profilePicture
+    ) {
+      console.error('Please fill in all the required fields!');
+      setLoading(true);
+    }
     console.log('Name:', name);
     console.log('Bio:', bio);
     console.log('Selected Department:', selectedDepartment);
@@ -175,7 +257,11 @@ const CreateProfileScreen = () => {
     console.log('Profile Picture:', profilePicture);
     console.log('Work Location:', location);
     console.log('Selected Designation:', selectedDesignation);
+
+    setLoading(true);
+
     try {
+      console.log('insideee');
       const updatedProfile = await updateUserProfile(
         userId,
         name,
@@ -187,11 +273,28 @@ const CreateProfileScreen = () => {
         selectedDesignation,
       );
       console.log('Profile updated successfully:', updatedProfile);
-      navigation.navigate('Private', {screen: 'Profile',  params: { userId: userId },});
+      navigation.navigate('Private', {screen: 'Home'});
     } catch (error) {
       console.error(error);
+      console.log('hey error');
+    } finally {
+      setLoading(false);
     }
-    // navigation.navigate('Private', {screen: 'Home'});
+
+  };
+
+  const handleChangePassword = async () => {
+    console.log('Changing password:', {
+      currentPassword,
+      newPassword,
+      confirmNewPassword,
+    });
+    if (newPassword !== confirmNewPassword) {
+      console.error("Passwords don't match!");
+      return;
+    }
+    console.log('Password changed successfully.');
+    setIsChangePasswordVisible(false);
   };
 
   const onBackPress = () => {
@@ -202,12 +305,11 @@ const CreateProfileScreen = () => {
     <ScrollView>
       <View style={styles.container}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} style={styles.backIcon} />
+          <MaterialIcons name="arrow-back" size={24} style={styles.backIcon} onPress={() => navigation.goBack()}/>
         </TouchableOpacity>
 
         <View style={styles.profilePhotoContainer}>
           <View style={styles.profilePhotoWrapper}>
-            {/* <Image source={Icons.profilePicture2} style={styles.profilePhoto} /> */}
             <Image
               source={
                 profilePicture
@@ -261,21 +363,6 @@ const CreateProfileScreen = () => {
                 editable={false}
                 placeholderTextStyle={styles.placeholderColor}
               />
-
-              {/* <TCText style={styles.label}>Password</TCText>
-              <CustomInputField
-                //rightIcon={showPassword ? 'visibility-off' : 'visibility'}
-                lefticonStyle={{fontSize: 20}}
-                //onRightIconPress={() => setShowPassword(!showPassword)}
-                placeholder="•••••••"
-                placeholderTextStyle={{color: '#888'}}
-                secureTextEntry={!showPassword}
-                textStyle={styles.placeholderTextStyle}
-                containerStyle={styles.input}
-                value={userPassword}
-                editable={false}
-                onChangeText={text => setPassword(text)}
-              /> */}
 
               <TCText style={styles.label}>Designation</TCText>
               <Dropdown
@@ -337,16 +424,13 @@ const CreateProfileScreen = () => {
                 onChange={item => {
                   setSelectedDepartment(item.value);
                 }}
-                // renderLeftIcon={() => (
-                //   <MaterialIcons color="black" name="computer" size={20} />
-                // )}
                 renderItem={item => {
                   const isSelected = selectedDepartment === item.value;
                   return (
                     <View
                       style={[
                         styles.itemContainer,
-                        isSelected && {backgroundColor: 'transparent'}, // Override background
+                        isSelected && {backgroundColor: 'transparent'},
                       ]}>
                       <Text style={styles.itemText}>{item.label}</Text>
                       {isSelected && (
@@ -362,7 +446,6 @@ const CreateProfileScreen = () => {
                 }}
               />
               <TCText style={styles.label}>Skills</TCText>
-              {/* <View style={styles.dropdownWrapper}> */}
               <MultiSelect
                 style={styles.input}
                 mode="auto"
@@ -384,9 +467,6 @@ const CreateProfileScreen = () => {
                   setSelectedSkills(item);
                 }}
                 alwaysRenderSelectedItem={true}
-                // renderLeftIcon={() => (
-                //   <MaterialIcons color="black" name="domain" size={20} />
-                // )}
                 renderItem={item => {
                   const isSelected = selectedSkills.includes(item.value);
                   return (
@@ -410,8 +490,6 @@ const CreateProfileScreen = () => {
                 selectedStyle={styles.selectedStyle}
               />
 
-              {/* </View> */}
-
               <TCText style={styles.label}>Work Location</TCText>
               <CustomInputField
                 containerStyle={styles.input}
@@ -424,12 +502,86 @@ const CreateProfileScreen = () => {
                 }}
                 placeholderTextStyle={styles.placeholderColor}
               />
+              {isChangePasswordVisible && (
+                <>
+                  <View style={styles.passwordSectionContainer}>
+                    <TCText style={styles.label}>Current Password</TCText>
+                    <CustomInputField
+                      rightIcon={
+                        showCurrentPassword ? 'visibility-off' : 'visibility'
+                      }
+                      onRightIconPress={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
+                      placeholder="Enter current password"
+                      placeholderTextStyle={{color: '#888'}}
+                      secureTextEntry={!showCurrentPassword}
+                      textStyle={{fontSize: 16, color: Colors.darkBlue}}
+                      containerStyle={styles.input}
+                      value={currentPassword}
+                      onChangeText={setCurrentPassword}
+                    />
+
+                    <TCText style={styles.label}>New Password</TCText>
+                    <CustomInputField
+                      rightIcon={
+                        showNewPassword ? 'visibility-off' : 'visibility'
+                      }
+                      onRightIconPress={() =>
+                        setShowNewPassword(!showNewPassword)
+                      }
+                      placeholder="Enter new password"
+                      placeholderTextStyle={{color: '#888'}}
+                      secureTextEntry={!showNewPassword}
+                      textStyle={{fontSize: 16, color: Colors.darkBlue}}
+                      containerStyle={styles.input}
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                    />
+
+                    <TCText style={styles.label}>Confirm New Password</TCText>
+                    <CustomInputField
+                      rightIcon={
+                        showConfirmNewPassword ? 'visibility-off' : 'visibility'
+                      }
+                      onRightIconPress={() =>
+                        setShowConfirmNewPassword(!showConfirmNewPassword)
+                      }
+                      placeholder="Confirm new password"
+                      placeholderTextStyle={{color: '#888'}}
+                      secureTextEntry={!showConfirmNewPassword}
+                      textStyle={{fontSize: 16, color: Colors.darkBlue}}
+                      containerStyle={styles.input}
+                      value={confirmNewPassword}
+                      onChangeText={setConfirmNewPassword}
+                    />
+                  </View>
+                </>
+              )}
+
+              {/* <CustomButton
+                text="CHANGE PASSWORD"
+                onPress={() =>
+                  setIsChangePasswordVisible(!isChangePasswordVisible)
+                }
+                textStyle={styles.buttonText}
+                style={styles.button}
+              /> */}
 
               <CustomButton
                 text="SAVE"
                 onPress={saveProfile}
-                textStyle={styles.buttonText}
-                style={styles.button}
+                textStyle={
+                  isChangePasswordVisible
+                    ? styles.disabledText
+                    : styles.buttonText
+                } 
+                style={
+                  isChangePasswordVisible
+                    ? styles.disabledButton
+                    : styles.button
+                } 
+                disabled={isChangePasswordVisible}
               />
             </View>
           </ScrollView>
@@ -456,6 +608,11 @@ const CreateProfileScreen = () => {
           },
         ]}
       />
+      {loading && (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={Colors.darkBlue} />
+        </View>
+      )}
     </ScrollView>
   );
 };
