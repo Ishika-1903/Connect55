@@ -6,6 +6,10 @@ import OTPScreen from '../../screens/OTPScreen/OtpScreen';
 import PasswordScreen from '../../screens/PasswordScreen/PasswordScreen';
 import CreateAccountScreen from '../../screens/CreateAccountScreen/CreateAccountScreen';
 import CreateProfileScreen from '../../screens/CreateProfileScreen/CreateProfileScreen';
+import DummyChatScreen from '../../screens/DummyChatScreen';
+import ChatList from '../../components/chatComponent/ChatList';
+import HomeScreen from '../../screens/HomeScreen/HomeScreen';
+import IndividualChatScreen from '../../screens/ChatScreen/IndividualChatScreen';
 
 
 const PublicStack = createNativeStackNavigator();
@@ -19,6 +23,7 @@ const PublicNavigator = () => {
       <PublicStack.Screen name="Password" component={PasswordScreen} />
       <PublicStack.Screen name="CreateAccount" component={CreateAccountScreen} />
       <PublicStack.Screen name="CreateProfile" component={CreateProfileScreen} />
+      <PublicStack.Screen name="DummyChat" component={DummyChatScreen} />
   </PublicStack.Navigator>
   );
 };

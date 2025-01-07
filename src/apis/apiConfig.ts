@@ -3,11 +3,14 @@ import store from '../controller/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const apiClient = axios.create({
-  baseURL: 'https://3c39-2401-4900-883e-6931-4d9e-1115-b990-ba42.ngrok-free.app/api/v1',
+  baseURL: 'https://49fb-2401-4900-85cd-605b-f83d-f600-6ca0-cce2.ngrok-free.app/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+export const baseURLPhoto =
+'https://49fb-2401-4900-85cd-605b-f83d-f600-6ca0-cce2.ngrok-free.app';
 
 export const saveToken = async (token: string) => {
   try {

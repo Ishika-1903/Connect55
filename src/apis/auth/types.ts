@@ -15,7 +15,7 @@ export type RegisterResponse = {
   }
 
 export type UserProfile = {
-  _id: string;
+  userId: string;
   name: string;
   bio: string;
   designation: string | null;

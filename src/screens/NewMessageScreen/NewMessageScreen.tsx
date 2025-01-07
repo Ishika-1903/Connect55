@@ -1,31 +1,69 @@
 import React, { useState } from 'react';
 import CommonHeader from '../../components/header/CommonHeader';
-import {TCText} from '../../components/text/CustomText';
-import {Strings} from '../../utils/constants/strings';
+import { TCText } from '../../components/text/CustomText';
+import { Strings } from '../../utils/constants/strings';
 import {
   FlatList,
   Image,
   StyleSheet,
   TouchableOpacity,
   View,
+  Alert,
 } from 'react-native';
-import {Colors} from '../../utils/constants/colors';
+import { Colors } from '../../utils/constants/colors';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CustomInputField from '../../components/inputField/CustomInputField';
-import {useNavigation} from '@react-navigation/native';
-import {newChatData} from '../../utils/dummyData';
+import { useNavigation } from '@react-navigation/native';
+import { searchUsers } from '../../apis/auth/auth';
+import Icons from '../../utils/constants/Icons';
+import { baseURLPhoto } from '../../apis/apiConfig';
+import { useSelector } from 'react-redux';
+import { createChat } from '../../apis/chat/chat'; 
 
 const NewMessageScreen: React.FC = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null); 
+  const [error, setError] = useState<string | null>(null);
+  const userId = useSelector((state: any) => state.auth.userId); 
 
-  const filteredChatData = newChatData.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.bio.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length > 0) {
+      try {
+        const response = await searchUsers(query);
+        setSearchResults(response.data.data); 
+      } catch (error) {
+        console.error('Error fetching search results:', error);
+        setSearchResults([]); 
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
 
-  const handleChatPress = (chatId) => {
-    navigation.navigate('IndividualChatScreen', { chatId });
+  const handleChatPress = async (userIdToChat: string) => {
+    setSelectedUser(userIdToChat); 
+
+    if (userIdToChat) {
+     
+      const chatData = {
+        type: 'one-to-one',
+        participants: [userId, userIdToChat], 
+      };
+
+      try {
+        const response = await createChat(chatData);
+        if (response) {
+          Alert.alert('Chat Created', 'A new one-to-one chat has been created.');
+          navigation.navigate('IndividualChatScreen', { chatId: response.chatId }); // Assuming `chatId` is returned
+        }
+      } catch (error) {
+        console.error('Error creating chat:', error);
+        Alert.alert('Error', 'Something went wrong while creating the chat.');
+      }
+    }
   };
 
   return (
@@ -34,7 +72,12 @@ const NewMessageScreen: React.FC = () => {
         <CommonHeader
           leftContent={
             <View style={styles.leftContent}>
-              <MaterialIcons name="arrow-back" size={25} style={styles.icon} onPress={() => navigation.goBack()}/>
+              <MaterialIcons
+                name="arrow-back"
+                size={25}
+                style={styles.icon}
+                onPress={() => navigation.goBack()}
+              />
               <TCText style={styles.heading}>
                 {Strings.NEW_MESSAGE.toUpperCase()}
               </TCText>
@@ -46,13 +89,14 @@ const NewMessageScreen: React.FC = () => {
         <CustomInputField
           lefticon="search"
           placeholder="Search"
-          placeholderTextStyle={{color: Colors.darkBlue}}
+          placeholderTextStyle={{ color: Colors.darkBlue }}
           containerStyle={styles.inputField}
-          textStyle={{color:Colors.darkBlue}}
+          textStyle={{ color: Colors.darkBlue }}
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={handleSearch}
         />
       </View>
+
       <TouchableOpacity
         style={styles.groupChat}
         onPress={() => navigation.navigate('NewGroupChat')}>
@@ -67,22 +111,34 @@ const NewMessageScreen: React.FC = () => {
         </TCText>
       </TouchableOpacity>
 
+
       <FlatList
-        data={filteredChatData}
-        keyExtractor={item => item.id}
-        renderItem={({item}) => (
-          <TouchableOpacity 
-          onPress={() => handleChatPress(item.id)}  // Handle item click
-          style={styles.chatItem}
-        >
-          <Image source={item.profilePicture} style={styles.profilePicture} />
-          <View style={styles.chatDetails}>
-            <TCText style={styles.name}>{item.name}</TCText>
-            <TCText style={styles.bio}>{item.bio}</TCText>
-          </View>
-        </TouchableOpacity>
+        data={searchResults}
+        keyExtractor={item => item.userId}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => handleChatPress(item.userId)} 
+            style={styles.chatItem}>
+            <Image
+              source={
+                item.profilePicture
+                  ? { uri: `${baseURLPhoto}${item.profilePicture}` }
+                  : Icons.dummyProfile
+              }
+              style={styles.profilePicture}
+            />
+            <View style={styles.chatDetails}>
+              <TCText style={styles.name}>{item.name || 'Unnamed'}</TCText>
+              <TCText style={styles.bio}>{item.bio || 'No bio available'}</TCText>
+            </View>
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={
+          <TCText style={styles.noResultsText}>
+            {searchQuery ? 'No results found.' : 'Search for users.'}
+          </TCText>
+        }
       />
     </View>
   );
@@ -101,7 +157,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     letterSpacing: 1.5,
     fontWeight: 'bold',
-    left:5,
+    left: 5,
   },
   container: {
     flex: 1,
@@ -119,19 +175,6 @@ const styles = StyleSheet.create({
   inputField: {
     width: '90%',
     backgroundColor: Colors.gray,
-  },
-  groupChat: {
-    flexDirection: 'row',
-    marginHorizontal: 5,
-    marginBottom: 20,
-  },
-  groupIcon: {
-    marginHorizontal: 20,
-  },
-  groupChatHeading: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.darkBlue,
   },
   chatItem: {
     flexDirection: 'row',
@@ -161,6 +204,25 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 10,
+  },
+  noResultsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: 'gray',
+    marginTop: 20,
+  },
+  groupChat: {
+    flexDirection: 'row',
+    marginHorizontal: 5,
+    marginBottom: 20,
+  },
+  groupIcon: {
+    marginHorizontal: 20,
+  },
+  groupChatHeading: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.darkBlue,
   },
 });
 

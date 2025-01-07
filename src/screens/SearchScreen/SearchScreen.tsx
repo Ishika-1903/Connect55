@@ -1,15 +1,13 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   FlatList,
   StyleSheet,
-  SafeAreaView,
   Image,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
-import CommonSearchBar from '../../components/searchBar/CommonSearchBar';
-import ForYouPage from '../../components/forYouComponent/ForYouComponent';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {Colors} from '../../utils/constants/colors';
 import Icons from '../../utils/constants/Icons';
@@ -19,27 +17,38 @@ import {useNavigation} from '@react-navigation/native';
 import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
 import {newChatData, recentSearch} from '../../utils/dummyData';
 import {TCText} from '../../components/text/CustomText';
+import {searchUsers} from '../../apis/auth/auth';
 
 type SearchScreenNavigationProp =
   StackNavigationProp<PrivateNavigatorParamList>;
 
 const SearchScreen = () => {
   const navigation = useNavigation<SearchScreenNavigationProp>();
-  console.log('Ishikaaa');
   const [unreadCount, setUnreadCount] = useState(5);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchUserId, setSearchUserId] = useState<string | null>(null);
 
-  const filteredRecentSearch = newChatData.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const displayedData =
-    searchQuery === '' ? recentSearch.slice(0, 4) : filteredRecentSearch;
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length > 0) {
+      try {
+        const response = await searchUsers(query);
+        setSearchResults(response.data.data);
+      } catch (error) {
+        console.error('Error fetching search results:', error.message);
+        setSearchResults([]);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
 
   const tabs = [
     {icon: 'home', onPress: () => navigation.navigate('Home')},
     {icon: 'search', onPress: () => navigation.navigate('Search')},
-    // {icon: 'add-box', onPress: () => console.log('Home pressed')},
     {
       icon: 'email',
       onPress: () => navigation.navigate('ChatList'),
@@ -56,40 +65,66 @@ const SearchScreen = () => {
           lefticon="search"
           placeholder="Search"
           value={searchQuery}
-          onChangeText={text => setSearchQuery(text)}
+          onChangeText={handleSearch}
           placeholderTextStyle={{color: Colors.darkBlue}}
           containerStyle={styles.inputField}
           textStyle={{color: Colors.darkBlue}}
         />
       </View>
-      {/* <ForYouPage/> */}
+
       <View>
         <Text style={styles.recentSearchesTitle}>Recent Searches</Text>
         <View style={{marginTop: 20, marginHorizontal: 10}}>
-          <FlatList
-            data={displayedData}
-            keyExtractor={item => item.id}
-            renderItem={({item}) => (
-              <TouchableOpacity
-                style={styles.chatItem}
-                onPress={() => navigation.navigate('Profile')} // Add onPress here
-              >
-                <Image
-                  source={item.profilePicture}
-                  style={styles.profilePicture}
-                />
-                <View style={styles.chatDetails}>
-                  <TCText style={styles.name}>{item.name}</TCText>
-                  <TCText style={styles.bio}>{item.bio}</TCText>
-                </View>
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={styles.listContainer}
-          />
-          <Text style={styles.noMoreText}>No More Recent Searches</Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={Colors.darkBlue} />
+          ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : (
+            <FlatList
+              data={searchResults}
+              keyExtractor={item => item.userId}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  style={styles.chatItem}
+                  onPress={() => {
+                    setSearchUserId(item.userId);
+                    console.log(
+                      'Navigating to Profile with userId:',
+                      searchUserId,
+                    );
+                    navigation.navigate('Profile', {searchUserId});
+                  }}>
+                  <Image
+                    source={
+                      item.profilePicture
+                        ? {uri: item.profilePicture}
+                        : Icons.dummyProfile
+                    }
+                    style={styles.profilePicture}
+                  />
+                  <View style={styles.chatDetails}>
+                    <TCText style={styles.name}>
+                      {item.name || 'Unnamed'}
+                    </TCText>
+                    <TCText style={styles.bio}>
+                      {item.bio || 'No bio available'}
+                    </TCText>
+                  </View>
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.listContainer}
+              ListEmptyComponent={
+                <TCText style={styles.noResultsText}>
+                  {searchQuery ? 'No results found.' : 'Search for users.'}
+                </TCText>
+              }
+            />
+          )}
+          {!isLoading && searchQuery === '' && (
+            <Text style={styles.noMoreText}>No More Recent Searches</Text>
+          )}
         </View>
       </View>
-
       <CustomBottomTab
         tabs={tabs}
         style={{
@@ -108,17 +143,6 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     marginTop: 0,
-  },
-  logo: {
-    width: '90%',
-    height: 50,
-    marginHorizontal: 20,
-    marginBottom: 30,
-  },
-
-  itemText: {
-    fontSize: 16,
-    color: '#333',
   },
   noResultsText: {
     textAlign: 'center',
@@ -156,10 +180,6 @@ const styles = StyleSheet.create({
   chatDetails: {
     flex: 1,
   },
-  recentSearchesContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
   recentSearchesTitle: {
     position: 'absolute',
     fontSize: 18,
@@ -168,7 +188,6 @@ const styles = StyleSheet.create({
     color: Colors.darkBlue,
     marginTop: -20,
   },
-
   profilePicture: {
     width: 50,
     height: 50,
@@ -182,6 +201,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#d3d3d3',
     fontStyle: 'italic',
+  },
+  errorText: {
+    textAlign: 'center',
+    color: 'red',
+    marginTop: 10,
   },
 });
 

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {View, TextInput, TouchableOpacity, Image} from 'react-native';
 import {TCText} from '../../components/text/CustomText';
 import Icons from '../../utils/constants/Icons';
@@ -12,6 +12,8 @@ import {Strings} from '../../utils/constants/strings';
 import CustomButton from '../../components/buttons/CustomButton';
 import {validateEmail} from '../../utils/utils';
 import {login} from '../../apis/auth/auth';
+import {useDispatch} from 'react-redux';
+import {setToken, setUserId} from '../../controller/authSlice';
 
 type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
 
@@ -23,18 +25,18 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const navigation = useNavigation<PublicNavigationProps>();
-
+  const passwordInputRef = useRef<TextInput>(null);
+  
+  const dispatch = useDispatch();
   const handleSignIn = async () => {
-    //navigation.navigate('Private');
     try {
       setEmailError('');
       setPasswordError('');
-
+      console.log('1');
       if (!email.trim()) {
         setEmailError('* Email is required');
         return;
       }
-
       if (!password.trim()) {
         setPasswordError('Password is required');
         return;
@@ -42,6 +44,12 @@ const LoginScreen: React.FC = () => {
 
       const response = await login(email, password);
       console.log('Login Successful:', response.data);
+      const userId = response.data.data.userId;
+      const token = response.data.data.token;
+      console.log('token in login', token);
+      console.log('useerrId in login', userId);
+      dispatch(setUserId(userId));
+      dispatch(setToken(token));
 
       navigation.navigate('Private');
     } catch (error: any) {
@@ -82,6 +90,8 @@ const LoginScreen: React.FC = () => {
             }}
             containerStyle={{backgroundColor: '#EFEFEF'}}
             value={email}
+            returnKeyType="next" // Set return key to "next"
+            onSubmitEditing={() => passwordInputRef.current?.focus()}
             onChangeText={text => {
               setEmail(text);
               if (emailError && (validateEmail(text) || text.trim() === '')) {
@@ -109,6 +119,8 @@ const LoginScreen: React.FC = () => {
             }}
             containerStyle={{backgroundColor: '#EFEFEF'}}
             value={password}
+            ref={passwordInputRef} // Assign ref to password field
+            returnKeyType="done" // Set return key to "done"
             onChangeText={text => setPassword(text)}
           />
           {passwordError ? (

@@ -43,19 +43,19 @@ const posts = [
 
 const AnnouncementScreen: React.FC = ({navigation}: any) => {
   const [unreadCount, setUnreadCount] = useState(5);
-  const tabs = [
-    {icon: 'home', onPress: () => navigation.navigate('Home')},
-    {icon: 'search', onPress: () => navigation.navigate('Search')},
-    // {icon: 'add-box', onPress: () => console.log('New Post pressed')},
-    {
-      icon: 'email',
-      onPress: () => navigation.navigate('ChatList'),
-      unreadCount: unreadCount,
+  // const tabs = [
+  //   {icon: 'home', onPress: () => navigation.navigate('Home')},
+  //   {icon: 'search', onPress: () => navigation.navigate('Search')},
+  //   // {icon: 'add-box', onPress: () => console.log('New Post pressed')},
+  //   {
+  //     icon: 'email',
+  //     onPress: () => navigation.navigate('ChatList'),
+  //     unreadCount: unreadCount,
     
-    },
-    {icon: 'campaign', onPress: () => navigation.navigate('Announcement')},
-    {icon: 'person', onPress: () => navigation.navigate('Profile')},
-  ];
+  //   },
+  //   {icon: 'campaign', onPress: () => navigation.navigate('Announcement')},
+  //   {icon: 'person', onPress: () => navigation.navigate('Profile')},
+  // ];
 
   return (
     <View style={styles.container}>
@@ -65,14 +65,14 @@ const AnnouncementScreen: React.FC = ({navigation}: any) => {
       />
 
       <PostSection posts={posts} />
-      <CustomBottomTab
+      {/* <CustomBottomTab
         tabs={tabs}
         style={{
           color: 'white',
           position: 'absolute',
           bottom: 0,
         }}
-      />
+      /> */}
     </View>
   );
 };

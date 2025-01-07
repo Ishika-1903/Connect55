@@ -1,13 +1,22 @@
 import React from 'react';
-import {View, Text, StyleSheet, Image} from 'react-native';
-import {Colors} from '../../utils/constants/colors';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Colors } from '../../utils/constants/colors';
+
+type MediaType = {
+  uri: string;
+  name: string;
+  type: string;
+  size: number;
+};
 
 type ChatMessageProps = {
   message: string;
   isSender: boolean;
   timestamp: string;
   isGroupChat?: boolean;
-  profilePicture?: {uri: string} | number;
+  profilePicture?: { uri: string } | number;
+  media?: MediaType;
+  onMediaPress?: () => void;
 };
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -16,13 +25,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   timestamp,
   isGroupChat,
   profilePicture,
+  media,
+  onMediaPress,
 }) => {
   return (
     <View
       style={[
         styles.messageContainer,
         isSender ? styles.senderContainer : styles.receiverContainer,
-      ]}>
+      ]}
+    >
       {!isSender && isGroupChat && profilePicture && (
         <Image source={profilePicture} style={styles.profilePicture} />
       )}
@@ -31,14 +43,27 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         style={[
           styles.messageBubble,
           isSender ? styles.senderBubble : styles.receiverBubble,
-        ]}>
-        <Text
-          style={[
-            styles.messageText,
-            {color: isSender ? Colors.white : 'black'},
-          ]}>
-          {message}
-        </Text>
+          media ? styles.mediaBubble : {}, // Add extra padding for media
+        ]}
+      >
+        {media ? (
+          <TouchableOpacity onPress={onMediaPress} disabled={!onMediaPress}>
+            <Image
+              source={{ uri: media.uri }}
+              style={styles.mediaPreview}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        ) : (
+          <Text
+            style={[
+              styles.messageText,
+              { color: isSender ? Colors.white : Colors.black },
+            ]}
+          >
+            {message}
+          </Text>
+        )}
         <Text style={styles.timestamp}>{timestamp}</Text>
       </View>
     </View>
@@ -46,10 +71,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 };
 
 const styles = StyleSheet.create({
-  messageContent: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
   messageContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -76,6 +97,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.gray,
     marginLeft: 10,
     alignSelf: 'flex-start',
+  },
+  mediaBubble: {
+    padding: 0, // Remove padding to avoid distortion around the image
+  },
+  mediaPreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 5,
   },
   messageText: {
     fontSize: 14,

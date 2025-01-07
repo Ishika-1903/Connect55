@@ -58,9 +58,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
 import PublicNavigator from './PublicNavigator';
 import {AppStackParamList} from './navigators';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {createDrawerNavigator} from '@react-navigation/drawer';
-import DrawerNavigator from './DrawerNavigator';
+import Tabs from './BottomTabNavigator';
 
 const AppNavigator = () => {
   const AppStack = createNativeStackNavigator<AppStackParamList>();
@@ -99,6 +97,7 @@ const AppNavigator = () => {
         )} */}
         <AppStack.Screen name="Public" component={PublicNavigator} />
         <AppStack.Screen name="Private" component={PrivateNavigator} />
+        <AppStack.Screen name="Tabs" component={Tabs} />
       </AppStack.Navigator>
     </NavigationContainer>
   );

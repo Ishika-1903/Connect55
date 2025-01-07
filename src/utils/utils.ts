@@ -1,8 +1,9 @@
 //shahaney.ishika@fiftyfivetech.io
 export const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[a-zA-Z]+\.[a-zA-Z]+@fiftyfivetech\.io$/;
-    return emailRegex.test(email);
-  };
+  const emailRegex = /^[a-zA-Z]+(\.[a-zA-Z]+)?@fiftyfivetech\.io$/;
+  return emailRegex.test(email);
+};
+
 
 //atleast one uppercase,lowercase, number and one special character
 export const validatePassword = (password: string): boolean => {

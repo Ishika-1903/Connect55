@@ -32,6 +32,7 @@ import {CustomModal} from '../../components/CustomModal/CustomModal';
 import {styles} from './CreateProfileScreen.styles';
 import {RootState} from '../../controller/store';
 import {useSelector} from 'react-redux';
+import {baseURLPhoto} from '../../apis/apiConfig';
 
 type CreateProfileScreenNavigationProp = StackNavigationProp<
   PrivateNavigatorParamList,
@@ -65,7 +66,6 @@ const CreateProfileScreen = () => {
   const [departmentsData, setDepartmentsData] = useState<DropDownItem[]>([]);
   const [designationsData, setDesignationsData] = useState<DropDownItem[]>([]);
   const [isModalVisible, setModalVisible] = useState(false);
-
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -75,9 +75,8 @@ const CreateProfileScreen = () => {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const userId = useSelector((state: RootState) => state.auth.userId);
-  console.log('user id in profile screen', userId);
-  const baseURL =
-    'https://3c39-2401-4900-883e-6931-4d9e-1115-b990-ba42.ngrok-free.app';
+  console.log('userrrrId in profile', userId);
+
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
@@ -104,13 +103,12 @@ const CreateProfileScreen = () => {
           setSelectedDesignation(response.data.designation || '');
           setLocation(response.data.workLocation || '');
           const profilePictureURL = response.data.profilePicture
-            ? `${baseURL}${response.data.profilePicture}`
+            ? `${baseURLPhoto}${response.data.profilePicture}`
             : null;
           setProfilePicture(
             profilePictureURL ? {uri: profilePictureURL} : null,
           );
         } else {
-          console.log('First-time user, fetching minimal data (email only)...');
           if (response?.data?.email) {
             setUserEmail(response.data.email);
           }
@@ -250,18 +248,11 @@ const CreateProfileScreen = () => {
       console.error('Please fill in all the required fields!');
       setLoading(true);
     }
-    console.log('Name:', name);
-    console.log('Bio:', bio);
-    console.log('Selected Department:', selectedDepartment);
-    console.log('Skills:', selectedSkills);
-    console.log('Profile Picture:', profilePicture);
-    console.log('Work Location:', location);
-    console.log('Selected Designation:', selectedDesignation);
 
     setLoading(true);
-
+    console.log('1');
     try {
-      console.log('insideee');
+      console.log('2');
       const updatedProfile = await updateUserProfile(
         userId,
         name,
@@ -272,15 +263,16 @@ const CreateProfileScreen = () => {
         location,
         selectedDesignation,
       );
+      console.log('userId after api,', userId)
+      console.log('3');
       console.log('Profile updated successfully:', updatedProfile);
+      console.log('4');
       navigation.navigate('Private', {screen: 'Home'});
     } catch (error) {
       console.error(error);
-      console.log('hey error');
     } finally {
       setLoading(false);
     }
-
   };
 
   const handleChangePassword = async () => {
@@ -305,7 +297,12 @@ const CreateProfileScreen = () => {
     <ScrollView>
       <View style={styles.container}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} style={styles.backIcon} onPress={() => navigation.goBack()}/>
+          <MaterialIcons
+            name="arrow-back"
+            size={24}
+            style={styles.backIcon}
+            onPress={() => navigation.goBack()}
+          />
         </TouchableOpacity>
 
         <View style={styles.profilePhotoContainer}>
@@ -463,7 +460,6 @@ const CreateProfileScreen = () => {
                 searchPlaceholder="Search..."
                 value={selectedSkills}
                 onChange={item => {
-                  console.log('Selected Skills:', item);
                   setSelectedSkills(item);
                 }}
                 alwaysRenderSelectedItem={true}
@@ -575,12 +571,12 @@ const CreateProfileScreen = () => {
                   isChangePasswordVisible
                     ? styles.disabledText
                     : styles.buttonText
-                } 
+                }
                 style={
                   isChangePasswordVisible
                     ? styles.disabledButton
                     : styles.button
-                } 
+                }
                 disabled={isChangePasswordVisible}
               />
             </View>

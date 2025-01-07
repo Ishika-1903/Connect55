@@ -41,8 +41,8 @@ const CustomBottomTab: React.FC<CustomBottomTabProps> = ({
             <View style={styles.iconContainer}>
               <Icon
                 name={item.icon}
-                size={30}
-                color={Colors.darkBlue}
+                size={28}
+                color={Colors.white}
                 style={[style]}
               />
               {item.unreadCount && item.unreadCount > 0 && (
@@ -75,6 +75,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
+    position: 'absolute', // Keep it absolute
+  bottom: 0,           // Align at the bottom
+  left: 0,
+  right: 0,
   },
   tabItemsContainer: {
     flexDirection: 'row',
@@ -83,7 +87,7 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 10,
   },
   iconContainer: {
     marginHorizontal:20,
