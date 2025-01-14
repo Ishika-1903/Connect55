@@ -10,6 +10,8 @@ export type PrivateNavigatorParamList = {
   NewMessage: undefined;
   NewGroupChat: undefined;
   GroupChatScreen: undefined;
+  Invite:undefined;
+  AboutGroup:undefined;
   Public: {screen: keyof PublicNavigatorParamList; params?: any};
 };
 

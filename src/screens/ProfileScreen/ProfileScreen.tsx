@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {
   View,
-  StyleSheet,
   Image,
   TouchableOpacity,
   ScrollView,
@@ -23,7 +22,8 @@ import {getUserData} from '../../apis/auth/auth';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../controller/store';
 import {baseURLPhoto} from '../../apis/apiConfig';
-import { styles } from './ProfileScreen.styles';
+import {styles} from './ProfileScreen.styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ProfileScreenNavigationProp =
   StackNavigationProp<PrivateNavigatorParamList>;
@@ -31,12 +31,15 @@ type ProfileScreenNavigationProp =
 const ProfilePage: React.FC = () => {
   const userId = useSelector((state: RootState) => state.auth.userId);
   const route = useRoute();
+
+  const token = useSelector((state: RootState) => state.auth.token);
+  console.log('tokennn', token);
   const {chatUserId} = route.params || {};
   const {searchUserId} = route.params || {};
-  console.log('hiii from profile', chatUserId)
+  console.log('hiii from profile', chatUserId);
   console.log('chatuserid in profile', chatUserId);
   console.log('searchUserId in profile', searchUserId);
-  const idToFetch =  searchUserId || chatUserId || userId;
+  const idToFetch = searchUserId || chatUserId || userId;
 
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [visible, setVisible] = React.useState(false);
@@ -179,7 +182,11 @@ const ProfilePage: React.FC = () => {
             {idToFetch !== userId && (
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() =>  navigation.navigate('IndividualChatScreen', { chatUserId: idToFetch })}>
+                onPress={() =>
+                  navigation.navigate('IndividualChatScreen', {
+                    chatUserId: idToFetch,
+                  })
+                }>
                 <MaterialIcons
                   name="message"
                   size={24}
@@ -246,7 +253,19 @@ const ProfilePage: React.FC = () => {
           },
           {
             text: 'Confirm',
-            onPress: () => console.log('Confirmed!'),
+            onPress: async () => {
+              try {
+                await AsyncStorage.removeItem('token');
+                console.log('Token removed successfully');
+                navigation.reset({
+                  index: 0,
+                  routes: [{name: 'Public', params: {screen: 'Login'}}],
+                });
+                setVisible(false);
+              } catch (error) {
+                console.error('Error removing token:', error);
+              }
+            },
             buttonStyle: {
               backgroundColor: Colors.darkBlue,
               borderRadius: 10,
@@ -272,6 +291,5 @@ const ProfilePage: React.FC = () => {
     </View>
   );
 };
-
 
 export default ProfilePage;

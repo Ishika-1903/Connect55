@@ -15,10 +15,11 @@ import Icons from '../../utils/constants/Icons';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import CommonChatHeader from '../../components/chatComponent/ChatHeader';
 import {Strings} from '../../utils/constants/strings';
-import {getChatByChatId} from '../../apis/chat/chat';
+import {getChatByChatId, sendMessage} from '../../apis/chat/chat';
 import {RootState} from '../../controller/store';
 import {useSelector} from 'react-redux';
 import {baseURLPhoto} from '../../apis/apiConfig';
+import {getMqttClient} from '../../utils/mqttClient';
 
 const GroupChatScreen = () => {
   const navigation = useNavigation();
@@ -32,46 +33,106 @@ const GroupChatScreen = () => {
     [],
   );
   const [groupName, setGroupName] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<{
+    uri: string;
+    name: string;
+    type: string;
+    size: number;
+  } | null>(null);
 
   const {chatId} = route.params;
-
-  // const chatId: any = route.params;
-
-  console.log('chatIdddd', chatId);
+  const CHAT_TOPIC = 'chat/6756cbb47b19daf3ef9e7048/messages';
   const userId = useSelector((state: RootState) => state.auth.userId);
-  const scrollToEnd = () => {
-    flatListRef.current?.scrollToEnd({animated: true});
-  };
-
-  const handleSendMessage = () => {
-    if (inputText.trim() === '') return;
-    const newMessage = {
-      id: Date.now().toString(),
-      message: inputText,
-      isSender: true,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      profilePicture: Icons.dummyProfile,
-    };
-    setMessages(prevMessages => [...prevMessages, newMessage]);
-    setInputText('');
-    setTimeout(scrollToEnd, 100);
-  };
 
   useEffect(() => {
-    const showListener = Keyboard.addListener('keyboardDidShow', () =>
-      setIsKeyboardOpen(true),
-    );
-    const hideListener = Keyboard.addListener('keyboardDidHide', () =>
-      setIsKeyboardOpen(false),
-    );
-    return () => {
-      showListener.remove();
-      hideListener.remove();
+    const mqttClient = getMqttClient();
+    if (!mqttClient) {
+      console.warn('MQTT client is not connected yet!');
+      return;
+    }
+
+    const handleMessage = (topic: string, payload: Buffer) => {
+      if (topic === CHAT_TOPIC) {
+        const parsedMessage = JSON.parse(payload.toString());
+        const newMessage = {
+          id: parsedMessage.messageId || Date.now().toString(),
+          message: parsedMessage.content || '',
+          isSender: parsedMessage.senderId === userId,
+          timestamp: new Date(
+            parsedMessage.timestamp || Date.now(),
+          ).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          media: parsedMessage.media
+            ? {
+                uri: parsedMessage.media.startsWith('/')
+                  ? `${baseURLPhoto}${parsedMessage.media}`
+                  : parsedMessage.media,
+              }
+            : null,
+        };
+
+        setMessages(prevMessages => [...prevMessages, newMessage]);
+        flatListRef.current?.scrollToEnd({animated: true});
+      }
     };
-  }, []);
+
+    mqttClient.on('message', handleMessage);
+    mqttClient.subscribe(CHAT_TOPIC, err => {
+      if (err) {
+        console.error('Subscription error:', err);
+      } else {
+        console.log(`Subscribed to topic in Group Chat: ${CHAT_TOPIC}`);
+      }
+    });
+
+    return () => {
+      mqttClient.unsubscribe(CHAT_TOPIC, err => {
+        if (err) {
+          console.error('Unsubscribe error:', err);
+        }
+      });
+      mqttClient.removeListener('message', handleMessage);
+    };
+  }, [userId]);
+
+  const handleSendMessage = async () => {
+    if (!userId || (inputText.trim() === '' && !photo)) return;
+
+    try {
+      const response = await sendMessage(chatId, userId, inputText, photo);
+
+      const newMessage = {
+        id: response.data.messageId,
+        message: inputText,
+        isSender: true,
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        media: photo ? {...photo} : null,
+      };
+
+      const mqttClient = getMqttClient();
+      if (mqttClient) {
+        const messagePayload = JSON.stringify({
+          messageId: response.data.messageId,
+          content: inputText,
+          senderId: userId,
+          timestamp: new Date().toISOString(),
+          media: photo || null,
+        });
+        mqttClient.publish(CHAT_TOPIC, messagePayload);
+      }
+
+      setInputText('');
+      setPhoto(null);
+      flatListRef.current?.scrollToEnd({animated: true});
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchChatDetails = async () => {
@@ -94,8 +155,16 @@ const GroupChatScreen = () => {
           setHeaderProfilePictures(profilePictures);
           setGroupName(groupName || null);
 
-          setMessages(
-            messages.map((msg: { messageId: any; content: any; senderId: string | null; timestamp: string | number | Date; profilePicture: any; }) => ({
+          const messagesWithProfilePictures = messages.map(msg => {
+            const sender = participants.find(
+              (participant: {userId: string}) =>
+                participant.userId === msg.senderId,
+            );
+            const profilePicture = sender?.profilePicture
+              ? {uri: `${baseURLPhoto}${sender.profilePicture}`}
+              : Icons.profilePicture1;
+
+            return {
               id: msg.messageId,
               message: msg.content,
               isSender: msg.senderId === userId,
@@ -103,25 +172,35 @@ const GroupChatScreen = () => {
                 hour: '2-digit',
                 minute: '2-digit',
               }),
-              profilePicture: msg.profilePicture
-                ? {uri: `${baseURLPhoto}${msg.profilePicture}`}
-                : Icons.profilePicture1,
-            })),
-          );
+              profilePicture,
+            };
+          });
+
+          setMessages(messagesWithProfilePictures);
         }
       } catch (error) {
         console.error('Error fetching chat details:', error);
       }
     };
-
     fetchChatDetails();
   }, [chatId, userId]);
 
   useEffect(() => {
-    if (groupName) {
-      console.log('Group Name:', groupName);
-    }
-  }, [groupName]);
+    const showListener = Keyboard.addListener('keyboardDidShow', () =>
+      setIsKeyboardOpen(true),
+    );
+    const hideListener = Keyboard.addListener('keyboardDidHide', () =>
+      setIsKeyboardOpen(false),
+    );
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
+
+  const scrollToEnd = () => {
+    flatListRef.current?.scrollToEnd({animated: true});
+  };
 
   return (
     <KeyboardAvoidingView
@@ -135,6 +214,7 @@ const GroupChatScreen = () => {
             profilePictures={headerProfilePictures}
             names={participantNames}
             onBackPress={() => navigation.goBack()}
+            onNamePress={() => navigation.navigate('AboutGroup', {chatId})}
           />
           <FlatList
             ref={flatListRef}
@@ -150,8 +230,6 @@ const GroupChatScreen = () => {
               />
             )}
             contentContainerStyle={styles.messageList}
-            //onContentSizeChange={scrollToEnd}
-            //onLayout={scrollToEnd}
             keyboardShouldPersistTaps="handled"
           />
           <View

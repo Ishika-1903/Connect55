@@ -23,15 +23,23 @@ import CustomInputField from '../../components/inputField/CustomInputField';
 import {Strings} from '../../utils/constants/strings';
 import {createChat} from '../../apis/chat/chat';
 
+type SearchResultItem = {
+  userId: string;
+  name: string;
+  bio?: string;
+  profilePicture?: string;
+};
+
 const NewGroupChatScreen: React.FC = () => {
   const navigation = useNavigation();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [groupName, setGroupName] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const userId = useSelector((state: RootState) => state.auth.userId);
-  
+  const [groupIcon, setGroupIcon] = useState<any>(null);
+
   useEffect(() => {
     console.log('Updated Selected User IDs:', selectedUsers);
   }, [selectedUsers]);
@@ -61,33 +69,48 @@ const NewGroupChatScreen: React.FC = () => {
       setSearchResults([]);
     }
   };
+
   const handleCreateGroupChat = async () => {
-    if (groupName.trim()) {
-      const chatData = {
-        type: 'group',
-        groupName: groupName,
-        adminId: userId,
-        participants: [userId, ...selectedUsers],
-      };
-
-      console.log('Chat Data to be sent to API:', chatData);
-
-      try {
-        const response = await createChat(chatData);
-        if (response) {
-          Alert.alert('Group Chat Created', `Group Name: ${groupName}`);
-          setModalVisible(false);
-          navigation.goBack();
-        }
-      } catch (error) {
-        console.error('Error creating group chat:', error);
-        Alert.alert('Error', 'Something went wrong while creating the group.');
-      }
-    } else {
+    if (!userId) {
+      Alert.alert('Error', 'User is not logged in. Please log in again.');
+      return;
+    }
+  
+    if (!groupName.trim()) {
       Alert.alert('Error', 'Please enter a group name');
+      return;
+    }
+  
+    try {
+      const participants = [userId, ...selectedUsers];
+      console.log('Participants:', participants);
+      // const groupIconData = groupIcon
+      // ? {
+      //     uri: groupIcon.uri,
+      //     name: groupIcon.fileName || 'group_icon.jpg',
+      //     type: groupIcon.type || 'image/jpeg',
+      //     size: groupIcon.size || 0, 
+      //   }
+      // : null;
+console.log('adminIddddd', userId);
+      const response = await createChat(
+        'group', 
+        groupName,
+        participants,
+        userId,
+        // groupIconData, 
+      );
+  
+      if (response) {
+        Alert.alert('Success', 'Group Chat Created Successfully');
+        setModalVisible(false);
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('Error creating group chat:', error);
     }
   };
-
+  
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -130,9 +153,9 @@ const NewGroupChatScreen: React.FC = () => {
             }
             name={item.name || 'Unnamed'}
             bio={item.bio || 'No bio available'}
-            isSelected={selectedUsers.includes(item.id)}
+            isSelected={selectedUsers.includes(item.userId)}
             onSelectionChange={isSelected =>
-              handleSelectionChange(item.id, isSelected)
+              handleSelectionChange(item.userId, isSelected)
             }
           />
         )}
@@ -171,7 +194,7 @@ const NewGroupChatScreen: React.FC = () => {
                 text="Create Group"
                 textStyle={{color: Colors.white}}
                 onPress={handleCreateGroupChat}
-                style={{ ...styles.modalButton, ...styles.modalButtonCreate }}
+                style={{...styles.modalButton, ...styles.modalButtonCreate}}
               />
               <CustomButton
                 text="Cancel"
@@ -243,8 +266,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
-    color:Colors.darkBlue, 
-    textAlign:'center'
+    color: Colors.darkBlue,
+    textAlign: 'center',
   },
   modalInput: {
     height: 40,
@@ -273,4 +296,3 @@ const styles = StyleSheet.create({
 });
 
 export default NewGroupChatScreen;
-

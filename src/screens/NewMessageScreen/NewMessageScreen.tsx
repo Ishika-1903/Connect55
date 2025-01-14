@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import CommonHeader from '../../components/header/CommonHeader';
-import { TCText } from '../../components/text/CustomText';
-import { Strings } from '../../utils/constants/strings';
+import {TCText} from '../../components/text/CustomText';
+import {Strings} from '../../utils/constants/strings';
 import {
   FlatList,
   Image,
@@ -10,33 +10,32 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { Colors } from '../../utils/constants/colors';
+import {Colors} from '../../utils/constants/colors';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CustomInputField from '../../components/inputField/CustomInputField';
-import { useNavigation } from '@react-navigation/native';
-import { searchUsers } from '../../apis/auth/auth';
+import {useNavigation} from '@react-navigation/native';
+import {searchUsers} from '../../apis/auth/auth';
 import Icons from '../../utils/constants/Icons';
-import { baseURLPhoto } from '../../apis/apiConfig';
-import { useSelector } from 'react-redux';
-import { createChat } from '../../apis/chat/chat'; 
+import {baseURLPhoto} from '../../apis/apiConfig';
+import {useSelector} from 'react-redux';
+import {createChat} from '../../apis/chat/chat';
 
 const NewMessageScreen: React.FC = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [selectedUser, setSelectedUser] = useState<string | null>(null); 
-  const [error, setError] = useState<string | null>(null);
-  const userId = useSelector((state: any) => state.auth.userId); 
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const userId = useSelector((state: any) => state.auth.userId);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.length > 0) {
       try {
         const response = await searchUsers(query);
-        setSearchResults(response.data.data); 
+        setSearchResults(response.data.data);
       } catch (error) {
         console.error('Error fetching search results:', error);
-        setSearchResults([]); 
+        setSearchResults([]);
       }
     } else {
       setSearchResults([]);
@@ -44,20 +43,24 @@ const NewMessageScreen: React.FC = () => {
   };
 
   const handleChatPress = async (userIdToChat: string) => {
-    setSelectedUser(userIdToChat); 
+    setSelectedUser(userIdToChat);
 
     if (userIdToChat) {
-     
       const chatData = {
         type: 'one-to-one',
-        participants: [userId, userIdToChat], 
+        participants: [userId, userIdToChat],
       };
 
       try {
         const response = await createChat(chatData);
         if (response) {
-          Alert.alert('Chat Created', 'A new one-to-one chat has been created.');
-          navigation.navigate('IndividualChatScreen', { chatId: response.chatId }); // Assuming `chatId` is returned
+          Alert.alert(
+            'Chat Created',
+            'A new one-to-one chat has been created.',
+          );
+          navigation.navigate('IndividualChatScreen', {
+            chatId: response.chatId,
+          });
         }
       } catch (error) {
         console.error('Error creating chat:', error);
@@ -89,13 +92,25 @@ const NewMessageScreen: React.FC = () => {
         <CustomInputField
           lefticon="search"
           placeholder="Search"
-          placeholderTextStyle={{ color: Colors.darkBlue }}
+          placeholderTextStyle={{color: Colors.darkBlue}}
           containerStyle={styles.inputField}
-          textStyle={{ color: Colors.darkBlue }}
+          textStyle={{color: Colors.darkBlue}}
           value={searchQuery}
           onChangeText={handleSearch}
         />
       </View>
+
+      <TouchableOpacity
+        style={styles.groupChat}
+        onPress={() => navigation.navigate('Invite')}>
+        <MaterialIcons
+          name="person-add"
+          size={20}
+          color={Colors.darkBlue}
+          style={styles.groupIcon}
+        />
+        <TCText style={styles.groupChatHeading}>{Strings.INVITE}</TCText>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.groupChat}
@@ -111,25 +126,26 @@ const NewMessageScreen: React.FC = () => {
         </TCText>
       </TouchableOpacity>
 
-
       <FlatList
         data={searchResults}
         keyExtractor={item => item.userId}
-        renderItem={({ item }) => (
+        renderItem={({item}) => (
           <TouchableOpacity
-            onPress={() => handleChatPress(item.userId)} 
+            onPress={() => handleChatPress(item.userId)}
             style={styles.chatItem}>
             <Image
               source={
                 item.profilePicture
-                  ? { uri: `${baseURLPhoto}${item.profilePicture}` }
+                  ? {uri: `${baseURLPhoto}${item.profilePicture}`}
                   : Icons.dummyProfile
               }
               style={styles.profilePicture}
             />
             <View style={styles.chatDetails}>
               <TCText style={styles.name}>{item.name || 'Unnamed'}</TCText>
-              <TCText style={styles.bio}>{item.bio || 'No bio available'}</TCText>
+              <TCText style={styles.bio}>
+                {item.bio || 'No bio available'}
+              </TCText>
             </View>
           </TouchableOpacity>
         )}

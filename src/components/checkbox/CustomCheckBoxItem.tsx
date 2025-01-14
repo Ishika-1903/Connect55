@@ -30,16 +30,11 @@ const CustomCheckboxItem: React.FC<CustomCheckboxItemProps> = ({
 
   return (
     <TouchableOpacity style={styles.container} onPress={handlePress}>
-      {/* Profile Picture */}
       <Image source={profilePicture} style={styles.profilePicture} />
-
-      {/* Content */}
       <View style={styles.content}>
         <Text style={styles.name}>{name}</Text>
         {bio && <Text style={styles.bio}>{bio}</Text>}
       </View>
-
-      {/* Checkbox */}
       <View style={[styles.checkbox, checked && styles.checked]}>
         {checked && <MaterialIcons name="check" size={18} color="white" />}
       </View>

@@ -13,9 +13,10 @@ import IndividualChatScreen from '../../screens/ChatScreen/IndividualChatScreen'
 import NewMessageScreen from '../../screens/NewMessageScreen/NewMessageScreen';
 import PublicNavigator from './PublicNavigator';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
 import {BottomTabStackParamList} from './navigators';
 import {useNavigation} from '@react-navigation/native';
+import InviteScreen from '../../screens/InviteScreen/InviteScreen';
+import AboutGroupScreen from '../../screens/AboutGroupScreen/AboutGroupScreen';
 
 const Tab = createBottomTabNavigator<BottomTabStackParamList>();
 
@@ -89,6 +90,8 @@ const PrivateNavigator = () => {
       <PrivateStack.Screen name="NewMessage" component={NewMessageScreen} />
       <PrivateStack.Screen name="GroupChatScreen" component={GroupChatScreen} />
       <PrivateStack.Screen name="NewGroupChat" component={NewGroupChatScreen} />
+      <PrivateStack.Screen name="Invite" component={InviteScreen} />
+      <PrivateStack.Screen name="AboutGroup" component={AboutGroupScreen} />
       <PrivateStack.Screen name="Public" component={PublicNavigator} />
     </PrivateStack.Navigator>
   );

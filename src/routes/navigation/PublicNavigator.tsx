@@ -7,10 +7,6 @@ import PasswordScreen from '../../screens/PasswordScreen/PasswordScreen';
 import CreateAccountScreen from '../../screens/CreateAccountScreen/CreateAccountScreen';
 import CreateProfileScreen from '../../screens/CreateProfileScreen/CreateProfileScreen';
 import DummyChatScreen from '../../screens/DummyChatScreen';
-import ChatList from '../../components/chatComponent/ChatList';
-import HomeScreen from '../../screens/HomeScreen/HomeScreen';
-import IndividualChatScreen from '../../screens/ChatScreen/IndividualChatScreen';
-
 
 const PublicStack = createNativeStackNavigator();
 
@@ -27,4 +23,5 @@ const PublicNavigator = () => {
   </PublicStack.Navigator>
   );
 };
+
 export default PublicNavigator;

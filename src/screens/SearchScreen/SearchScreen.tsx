@@ -15,9 +15,16 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {PrivateNavigatorParamList} from '../../routes/navigation/navigators';
 import {useNavigation} from '@react-navigation/native';
 import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
-import {newChatData, recentSearch} from '../../utils/dummyData';
 import {TCText} from '../../components/text/CustomText';
 import {searchUsers} from '../../apis/auth/auth';
+import {baseURLPhoto} from '../../apis/apiConfig';
+
+type SearchResult = {
+  userId: string;
+  name?: string;
+  bio?: string;
+  profilePicture?: string;
+};
 
 type SearchScreenNavigationProp =
   StackNavigationProp<PrivateNavigatorParamList>;
@@ -26,7 +33,7 @@ const SearchScreen = () => {
   const navigation = useNavigation<SearchScreenNavigationProp>();
   const [unreadCount, setUnreadCount] = useState(5);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchUserId, setSearchUserId] = useState<string | null>(null);
@@ -38,7 +45,7 @@ const SearchScreen = () => {
         const response = await searchUsers(query);
         setSearchResults(response.data.data);
       } catch (error) {
-        console.error('Error fetching search results:', error.message);
+        console.error('Error fetching search results:', error);
         setSearchResults([]);
       }
     } else {
@@ -92,12 +99,12 @@ const SearchScreen = () => {
                       'Navigating to Profile with userId:',
                       searchUserId,
                     );
-                    navigation.navigate('Profile', {searchUserId});
+                    navigation.navigate('Profile', {searchUserId: item.userId});
                   }}>
                   <Image
                     source={
                       item.profilePicture
-                        ? {uri: item.profilePicture}
+                        ? {uri: `${baseURLPhoto}${item.profilePicture}`}
                         : Icons.dummyProfile
                     }
                     style={styles.profilePicture}

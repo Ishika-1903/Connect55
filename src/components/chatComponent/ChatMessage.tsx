@@ -43,7 +43,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         style={[
           styles.messageBubble,
           isSender ? styles.senderBubble : styles.receiverBubble,
-          media ? styles.mediaBubble : {}, // Add extra padding for media
+          media ? styles.mediaBubble : {}, 
         ]}
       >
         {media ? (

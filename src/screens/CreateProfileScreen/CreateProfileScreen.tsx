@@ -229,7 +229,6 @@ const CreateProfileScreen = () => {
   }, []);
 
   const saveProfile = async () => {
-    //navigation.navigate('Private', {screen: 'Home'});
 
     if (!userId) {
       console.error('User ID is missing in create profile screen');

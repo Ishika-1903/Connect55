@@ -327,6 +327,7 @@ const IndividualChatScreen = () => {
             names={[userData?.data.name || 'Unknown']}
             onBackPress={onBackPress}
             groupName={null}
+            onNamePress={() => navigation.navigate('Profile', { chatUserId })}
           />
           <FlatList
             ref={flatListRef}

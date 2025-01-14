@@ -10,13 +10,56 @@ import {apiClient} from '../apiConfig';
 // });
 // export {mqttClient};
 
-export const createChat = async (chatData: CreateChatRequest): Promise<any> => {
+// export const createChat = async (chatData: CreateChatRequest): Promise<any> => {
+//   try {
+//     const response = await apiClient.post(`/chat/create-chat`, chatData);
+//     console.log('chat data', response);
+//     return response.data;
+//   } catch (error: any) {
+//     console.log('Error creating chat:', error);
+//   }
+// };
+
+export const createChat = async (
+  type: string,
+  groupName: string,
+  participants: string[],
+  adminId: string,
+  // groupIcon: {
+  //     uri: string;
+  //     name: string;
+  //     type: string;
+  //     size: number;
+  //   } | null,
+): Promise<any> => {
   try {
-    const response = await apiClient.post(`/chat/create-chat`, chatData);
-    console.log('chat data', response);
+    const formData = new FormData();
+    formData.append('type', type);
+    formData.append('groupName', groupName);
+    formData.append('participants', JSON.stringify(participants));
+    formData.append('adminId', adminId);
+    // if (groupIcon && groupIcon.uri) {
+    //   formData.append('profilePicture', {
+    //     uri: groupIcon.uri,
+    //     type: groupIcon.type || 'image/jpg',
+    //     name: groupIcon.name || 'profile_picture.jpg',
+    //   });
+    // }
+    console.log('formDataaaa', formData.getParts());
+    const response = await apiClient.post(`/chat/create-chat`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log('Chat created successfully:', response.data);
     return response.data;
   } catch (error: any) {
-    console.log('Error creating chat:', error);
+    console.error(
+      'Error creating chat:',
+      error.response?.data || error.message,
+    );
+    throw error;
   }
 };
 
