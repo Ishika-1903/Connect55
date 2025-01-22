@@ -33,12 +33,15 @@ const GroupChatScreen = () => {
     [],
   );
   const [groupName, setGroupName] = useState<string | null>(null);
+  const [groupIcon, setGroupIcon] = useState<string | null>(null);
   const [photo, setPhoto] = useState<{
     uri: string;
     name: string;
     type: string;
     size: number;
   } | null>(null);
+
+  const [participants, setParticipants] = useState([]);
 
   const {chatId} = route.params;
   const CHAT_TOPIC = 'chat/6756cbb47b19daf3ef9e7048/messages';
@@ -54,6 +57,10 @@ const GroupChatScreen = () => {
     const handleMessage = (topic: string, payload: Buffer) => {
       if (topic === CHAT_TOPIC) {
         const parsedMessage = JSON.parse(payload.toString());
+        const sender = participants.find(
+          (participant: {userId: string}) => participant.userId === parsedMessage.senderId,
+        );
+        
         const newMessage = {
           id: parsedMessage.messageId || Date.now().toString(),
           message: parsedMessage.content || '',
@@ -139,7 +146,9 @@ const GroupChatScreen = () => {
       try {
         const response = await getChatByChatId(chatId);
         if (response?.data) {
-          const {messages, participants, groupName} = response.data;
+          const {messages, participants, groupName, groupIcon} = response.data;
+
+          setParticipants(participants);
 
           const names = participants.map(
             (participant: {name: string}) => participant.name,
@@ -154,6 +163,7 @@ const GroupChatScreen = () => {
           setParticipantNames(names);
           setHeaderProfilePictures(profilePictures);
           setGroupName(groupName || null);
+          setGroupIcon(groupIcon ? {uri: `${baseURLPhoto}${groupIcon}`} : null);
 
           const messagesWithProfilePictures = messages.map(msg => {
             const sender = participants.find(
@@ -166,7 +176,7 @@ const GroupChatScreen = () => {
 
             return {
               id: msg.messageId,
-              message: msg.content,
+              message: msg.content, 
               isSender: msg.senderId === userId,
               timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -211,6 +221,7 @@ const GroupChatScreen = () => {
         <View style={{flex: 1}}>
           <CommonChatHeader
             groupName={groupName}
+            groupIcon={groupIcon}
             profilePictures={headerProfilePictures}
             names={participantNames}
             onBackPress={() => navigation.goBack()}

@@ -18,12 +18,23 @@ import {searchUsers} from '../../apis/auth/auth';
 import Icons from '../../utils/constants/Icons';
 import {baseURLPhoto} from '../../apis/apiConfig';
 import {useSelector} from 'react-redux';
-import {createChat} from '../../apis/chat/chat';
+import {
+  createChat,
+  getChatByChatId,
+  getChatByUserId,
+} from '../../apis/chat/chat';
+
+type User = {
+  userId: string;
+  profilePicture: string | null;
+  name: string | null;
+  bio: string | null;
+};
 
 const NewMessageScreen: React.FC = () => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const userId = useSelector((state: any) => state.auth.userId);
 
@@ -42,24 +53,147 @@ const NewMessageScreen: React.FC = () => {
     }
   };
 
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  // const handleChatPress = async (userIdToChat: string) => {
+  //   setSelectedUser(userIdToChat);
+
+  //    console.log('Selected User ID:', userIdToChat);
+  //   if (userIdToChat) {
+  //     try {
+  //       const response = await createChat(
+  //         'one-to-one',
+  //         '',
+  //         [userId, userIdToChat],
+  //         ''
+  //       );
+
+  //       if (response) {
+  //         Alert.alert(
+  //           'Chat Created',
+  //           'A new one-to-one chat has been created.',
+  //         );
+  //         navigation.navigate('IndividualChatScreen', {
+  //           chatId: response.chatId,
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error('Error creating chat:', error);
+  //       Alert.alert('Error', 'Something went wrong while creating the chat.');
+  //     }
+  //   }
+  // };
+
+  // const handleChatPress = async (userIdToChat: string) => {
+  //   setSelectedUser(userIdToChat);
+  //   console.log('Selected User ID:', userIdToChat);
+
+  //   if (userIdToChat) {
+  //     try {
+
+  //       const existingChat = await getChatByUserId(userId); // Pass current userId to check chats
+
+  //       if (existingChat?.data && Array.isArray(existingChat.data)) {
+  //         // Check if any chat exists between userId and userIdToChat with type 'one-to-one'
+  //         const chatExists = existingChat.data.find((chat: any) =>
+  //           chat.type === 'one-to-one' &&
+  //           chat.participants.some((participant: any) => participant.userId === userId) &&
+  //           chat.participants.some((participant: any) => participant.userId === userIdToChat)
+  //         );
+
+  //         if (chatExists) {
+  //           console.log('Chat already created. Chat ID:', chatExists._id);
+  //           Alert.alert('Chat Already Exists', `This chat already exists. Chat ID: ${chatExists._id}`);
+
+  //           // navigation.navigate('IndividualChatScreen', {
+  //           //   chatId: chatExists._id,
+  //           // });
+  //           return;
+  //         }
+  //       }
+
+  //       const response = await createChat(
+  //         'one-to-one',
+  //         '',
+  //         [userId, userIdToChat],
+  //         ''
+  //       );
+
+  //       if (response) {
+  //         Alert.alert('Chat Created', 'A new one-to-one chat has been created.');
+  //         // navigation.navigate('IndividualChatScreen', {
+  //         //   chatId: response.chatId,
+  //         // });
+  //       }
+  //     } catch (error) {
+  //       console.error('Error creating chat:', error);
+  //       Alert.alert('Error', 'Something went wrong while creating the chat.');
+  //     }
+  //   }
+  // };
+
   const handleChatPress = async (userIdToChat: string) => {
     setSelectedUser(userIdToChat);
+    console.log('Selected User ID:', userIdToChat);
 
     if (userIdToChat) {
-      const chatData = {
-        type: 'one-to-one',
-        participants: [userId, userIdToChat],
-      };
-
       try {
-        const response = await createChat(chatData);
+        const existingChat = await getChatByUserId(userId);
+
+        if (existingChat?.data && Array.isArray(existingChat.data)) {
+          const chatExists = existingChat.data.find(
+            (chat: any) =>
+              chat.type === 'one-to-one' &&
+              chat.participants.some(
+                (participant: any) => participant.userId === userId,
+              ) &&
+              chat.participants.some(
+                (participant: any) => participant.userId === userIdToChat,
+              ),
+          );
+
+          if (chatExists) {
+            console.log('Chat already created. Chat ID:', chatExists._id);
+
+            const chatDetails = await getChatByChatId(chatExists._id);
+
+            if (chatDetails) {
+              console.log('Existing Chat Details:', chatDetails);
+              Alert.alert(
+                'Chat Already Exists',
+                `This chat already exists. Chat ID: ${chatExists._id}`,
+              );
+
+              navigation.navigate('IndividualChatScreen', {
+                chatId: chatExists._id,
+                chatUserId: userIdToChat,
+              });
+
+              return;
+            }
+          }
+        }
+
+        const response = await createChat(
+          'one-to-one',
+          '',
+          [userId, userIdToChat],
+          '',
+        );
+
         if (response) {
+          console.log('New Chat Created. Chat ID:', response.data.chatId);
           Alert.alert(
             'Chat Created',
             'A new one-to-one chat has been created.',
           );
+
           navigation.navigate('IndividualChatScreen', {
-            chatId: response.chatId,
+            chatId: response.data.chatId,
+            chatUserId: userIdToChat,
           });
         }
       } catch (error) {
@@ -93,6 +227,9 @@ const NewMessageScreen: React.FC = () => {
           lefticon="search"
           placeholder="Search"
           placeholderTextStyle={{color: Colors.darkBlue}}
+          rightIcon="close"
+          rightIconStyle={{color: Colors.darkBlue, fontSize: 15}}
+          onRightIconPress={handleClearSearch}
           containerStyle={styles.inputField}
           textStyle={{color: Colors.darkBlue}}
           value={searchQuery}

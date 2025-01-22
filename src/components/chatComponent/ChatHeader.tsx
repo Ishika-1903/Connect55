@@ -8,30 +8,45 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { Colors } from '../../utils/constants/colors';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../controller/store';
+import {Colors} from '../../utils/constants/colors';
+import {useNavigation} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../controller/store';
 
 type ChatHeaderProps = {
   groupName: string | null;
   profilePictures: ImageSourcePropType[];
+  profileInitials?: string;
   names: string[];
   onBackPress: () => void;
-  onNamePress?: () => void; 
+  onNamePress?: () => void;
+  groupIcon?: ImageSourcePropType;
 };
 
 const CommonChatHeader: React.FC<ChatHeaderProps> = ({
   groupName,
   profilePictures,
+  profileInitials,
   names,
   onBackPress,
   onNamePress,
+  groupIcon,
 }) => {
   const navigation = useNavigation();
   const chatUserId = useSelector((state: RootState) => state.auth.chatUserId);
 
   const renderProfilePictures = () => {
+    if (groupIcon) {
+      return <Image source={groupIcon} style={styles.groupIcon} />;
+    }
+    if (profileInitials) {
+      return (
+        <View style={styles.intialsProfile}>
+          <Text style={styles.initials}>{profileInitials}</Text>
+        </View>
+      );
+    }
+
     const picturesToShow = profilePictures.slice(0, 4);
 
     const getPositionStyles = (index: number) => {
@@ -83,7 +98,7 @@ const CommonChatHeader: React.FC<ChatHeaderProps> = ({
   };
 
   const handleNamePress = () => {
-    navigation.navigate('Profile', { chatUserId });
+    navigation.navigate('Profile', {chatUserId});
   };
 
   return (
@@ -132,6 +147,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.white,
   },
+  groupIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+  },
   singlePicture: {
     top: 5,
     left: 5,
@@ -171,8 +191,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.darkBlue,
-    flex: 1,
-    top: 15,
+    marginHorizontal: 10,
+  },
+  intialsProfile: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.darkBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  initials: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
 

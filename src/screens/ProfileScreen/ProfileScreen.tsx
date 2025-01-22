@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Text,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icons from '../../utils/constants/Icons';
@@ -24,6 +25,7 @@ import {RootState} from '../../controller/store';
 import {baseURLPhoto} from '../../apis/apiConfig';
 import {styles} from './ProfileScreen.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {getInitials} from '../../utils/utils';
 
 type ProfileScreenNavigationProp =
   StackNavigationProp<PrivateNavigatorParamList>;
@@ -32,14 +34,16 @@ const ProfilePage: React.FC = () => {
   const userId = useSelector((state: RootState) => state.auth.userId);
   const route = useRoute();
 
-  const token = useSelector((state: RootState) => state.auth.token);
-  console.log('tokennn', token);
+  // const token = useSelector((state: RootState) => state.auth.token);
+  // console.log('tokennn', token);
   const {chatUserId} = route.params || {};
   const {searchUserId} = route.params || {};
   console.log('hiii from profile', chatUserId);
   console.log('chatuserid in profile', chatUserId);
   console.log('searchUserId in profile', searchUserId);
-  const idToFetch = searchUserId || chatUserId || userId;
+  const storedUserId = AsyncStorage.getItem('userId');
+
+  // const idToFetch = searchUserId || chatUserId || userId;
 
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [visible, setVisible] = React.useState(false);
@@ -47,6 +51,7 @@ const ProfilePage: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(5);
 
   const [loading, setLoading] = useState(true);
+  const [idToFetch, setIdToFetch] = useState<string | null>(null);
 
   const showModal = () => {
     console.log('Show modal called');
@@ -69,16 +74,27 @@ const ProfilePage: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        setIdToFetch(
+          searchUserId || chatUserId || userId || storedUserId || null,
+        );
+      } catch (error) {
+        console.error('Error fetching user ID:', error);
+      }
+    };
+    fetchUserId();
+  }, [userId, chatUserId, searchUserId]);
+
+  useEffect(() => {
     const fetchUserData = async () => {
       if (!idToFetch) {
-        console.error('User ID is missing in Profile Screen');
         setLoading(false);
         return;
       }
-
       try {
         const response = await getUserData(idToFetch);
-        console.log('helloooo', response);
         if (response.success) {
           setUserData(response.data);
         } else {
@@ -90,9 +106,8 @@ const ProfilePage: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchUserData();
-  }, [userId]);
+  }, [idToFetch]);
 
   const shuffleArray = (array: string[]) => {
     let shuffledArray = [...array];
@@ -133,7 +148,25 @@ const ProfilePage: React.FC = () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <LinearGradient colors={['#004080', '#232343']} style={styles.header}>
-          <View style={styles.editIcon}>
+          <View
+            style={[
+              styles.editIcon,
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              },
+            ]}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={[styles.backButton, {position: 'absolute', right: 350}]}>
+              <MaterialIcons
+                name="arrow-back"
+                size={24}
+                style={styles.backIcon}
+              />
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={showModal}>
               <MaterialIcons name="logout" size={28} color={Colors.white} />
             </TouchableOpacity>
@@ -145,7 +178,12 @@ const ProfilePage: React.FC = () => {
                 style={styles.profileImage}
               />
             ) : (
-              <Image source={Icons.dummyProfile} style={styles.profileImage} />
+              // <Image source={Icons.dummyProfile} style={styles.profileImage} />
+              <View style={styles.intialsProfile}>
+                <Text style={styles.initials}>
+                  {getInitials(userData?.name || 'Unknown')}
+                </Text>
+              </View>
             )}
           </View>
         </LinearGradient>
@@ -178,7 +216,7 @@ const ProfilePage: React.FC = () => {
             📍 {userData?.workLocation || 'N/A'}
           </TCText>
 
-          <View style={styles.actionButtons}>
+          {/* <View style={styles.actionButtons}>
             {idToFetch !== userId && (
               <TouchableOpacity
                 style={styles.actionButton}
@@ -198,7 +236,7 @@ const ProfilePage: React.FC = () => {
                 </TCText>
               </TouchableOpacity>
             )}
-          </View>
+          </View> */}
 
           <View style={styles.skillsBox}>
             <TCText style={styles.sectionTitle}>SKILLS</TCText>
@@ -280,14 +318,14 @@ const ProfilePage: React.FC = () => {
         ]}
       />
 
-      <CustomBottomTab
+      {/* <CustomBottomTab
         tabs={tabs}
         style={{
           color: 'white',
           position: 'absolute',
           bottom: 0,
         }}
-      />
+      /> */}
     </View>
   );
 };

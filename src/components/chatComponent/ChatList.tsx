@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -6,6 +6,8 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
@@ -14,7 +16,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import CustomInputField from '../inputField/CustomInputField';
 import CommonHeader from '../header/CommonHeader';
 import ChatItem from './ChatItem';
-import {getChatByUserId} from '../../apis/chat/chat';
+import {getChatByUserId, pinChat} from '../../apis/chat/chat';
 import {RootState} from '../../controller/store';
 import {Colors} from '../../utils/constants/colors';
 import {baseURLPhoto} from '../../apis/apiConfig';
@@ -22,6 +24,7 @@ import Icons from '../../utils/constants/Icons';
 import {Strings} from '../../utils/constants/strings';
 import {setChatUserId} from '../../controller/authSlice';
 import GroupChatItem from './GroupChatItem';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatList: React.FC = () => {
   const navigation = useNavigation();
@@ -32,16 +35,59 @@ const ChatList: React.FC = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedChat, setSelectedChat] = useState<any>(null);
 
   const userId = useSelector((state: RootState) => state.auth.userId);
+
+  const handleLongPress = (chat: any) => {
+    setSelectedChat(chat);
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const handlePinChat = async () => {
+    if (selectedChat && selectedChat._id) {
+      try {
+        const isPinned = selectedChat.pinned;
+        const response = await pinChat({
+          chatId: selectedChat._id,
+          pinned: !isPinned,
+        });
+        if (response?.success) {
+          console.log(isPinned ? 'Chat unpinned!' : 'Chat pinned!');
+
+          setChatData(prevChatData =>
+            prevChatData.map(chat =>
+              chat._id === selectedChat._id
+                ? {...chat, pinned: !isPinned}
+                : chat,
+            ),
+          );
+        } else {
+          console.log('Failed to pin/unpin chat');
+        }
+      } catch (error) {
+        console.error('Error pinning/unpinning chat:', error);
+      }
+      setIsModalVisible(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
       const handleGetChatByUserId = async () => {
         try {
-          if (userId) {
+          let storedUserId = await AsyncStorage.getItem('userId');
+          if (!storedUserId) {
+            storedUserId = userId;
+          }
+          if (storedUserId) {
             setLoading(true);
-            const response = await getChatByUserId(userId);
+            const response = await getChatByUserId(storedUserId);
 
             if (response?.success) {
               const chats = response.data.filter(
@@ -51,11 +97,10 @@ const ChatList: React.FC = () => {
               const filteredChats = chats.map((chat: any) => {
                 if (chat.type === 'one-to-one') {
                   const otherParticipant = chat.participants.find(
-                    (participant: any) => participant.userId !== userId,
+                    (participant: any) => participant.userId !== storedUserId,
                   );
                   return {...chat, otherParticipant};
                 }
-
                 return chat;
               });
 
@@ -80,19 +125,26 @@ const ChatList: React.FC = () => {
 
   const filteredData = useMemo(() => {
     console.log('Active Tab:', activeTab);
+    if (activeTab === 'Pinned') {
+      return chatData.filter(chat => chat.pinned);
+    }
     if (activeTab === 'DirectMessages') {
-      // Filter for one-to-one messages
       return chatData.filter(
         chat =>
           chat.type === 'one-to-one' &&
+          chat.messages &&
+          chat.messages.length > 0 &&
           chat.otherParticipant?.name
             ?.toLowerCase()
             .includes(searchQuery.toLowerCase()),
       );
-    } else if (activeTab === 'Groups') {
+    }
+
+    if (activeTab === 'Groups') {
       return chatData.filter(
         chat =>
           chat.type === 'group' &&
+          chat.messages &&
           (chat.groupName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             chat.participants.some((participant: any) =>
               participant.name
@@ -101,8 +153,12 @@ const ChatList: React.FC = () => {
             )),
       );
     }
-    return chatData;
+    return chatData.filter(chat => chat.messages && chat.messages.length > 0);
   }, [chatData, searchQuery, activeTab]);
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
 
   const formatMessageTime = (timestamp: string) => {
     const messageDate = new Date(timestamp);
@@ -157,6 +213,9 @@ const ChatList: React.FC = () => {
           <CustomInputField
             lefticon="search"
             placeholder="Search"
+            rightIcon="close"
+            rightIconStyle={{color: Colors.darkBlue, fontSize: 15}}
+            onRightIconPress={handleClearSearch}
             placeholderTextStyle={{color: Colors.darkBlue}}
             containerStyle={styles.inputField}
             textStyle={{color: Colors.darkBlue}}
@@ -211,10 +270,14 @@ const ChatList: React.FC = () => {
         ) : (
           <FlatList
             data={filteredData}
-            keyExtractor={item => item.chatId}
+            keyExtractor={item => item._id}
             renderItem={({item}) => {
+              const profilePicture =
+                item.type === 'one-to-one'
+                  ? item.otherParticipant?.profilePicture
+                  : null;
+
               if (item.type === 'one-to-one') {
-                // For one-to-one chats, render ChatItem
                 return (
                   <ChatItem
                     profilePicture={
@@ -222,7 +285,7 @@ const ChatList: React.FC = () => {
                         ? {
                             uri: `${baseURLPhoto}${item.otherParticipant.profilePicture}`,
                           }
-                        : Icons.dummyProfile
+                        : undefined
                     }
                     name={item.otherParticipant?.name || 'Unknown User'}
                     lastMessage={
@@ -248,7 +311,7 @@ const ChatList: React.FC = () => {
                         ? formatMessageTime(
                             item.messages[item.messages.length - 1].timestamp,
                           )
-                        : null
+                        : undefined
                     }
                     unreadCount={item.unreadCount}
                     onPress={() => {
@@ -256,9 +319,22 @@ const ChatList: React.FC = () => {
                         dispatch(setChatUserId(item.otherParticipant.userId));
                       }
                       navigation.navigate('IndividualChatScreen', {
-                        chatId: item.chatId,
+                        chatId: item._id,
                       });
                     }}
+                    onLongPress={() => handleLongPress(item)}
+                    rightContent={
+                      activeTab !== 'Pinned' && item.pinned && (
+                        <View style={styles.pinContainer}>
+                          <MaterialIcons
+                            name="push-pin"
+                            size={20}
+                            color={Colors.darkBlue}
+                            style={styles.pinIcon}
+                          />
+                        </View>
+                      )
+                    }
                   />
                 );
               } else if (item.type === 'group') {
@@ -276,6 +352,11 @@ const ChatList: React.FC = () => {
                           : Icons.dummyProfile,
                       }))}
                     groupName={item.groupName}
+                    groupIcon={
+                      item.groupIcon
+                        ? {uri: `${baseURLPhoto}${item.groupIcon}`}
+                        : undefined
+                    }
                     lastMessage={
                       item.messages && item.messages.length > 0 ? (
                         item.messages[item.messages.length - 1].media ? (
@@ -302,11 +383,25 @@ const ChatList: React.FC = () => {
                         : null
                     }
                     unreadCount={item.unreadCount}
+                    onLongPress={() => {
+                      handleLongPress(item);
+                    }}
                     onPress={() => {
                       navigation.navigate('GroupChatScreen', {
-                        chatId: item.chatId,
+                        chatId: item._id,
                       });
                     }}
+                    rightContent={
+                      activeTab !== 'Pinned' &&
+                      item.pinned && (
+                        <MaterialIcons
+                          name="push-pin"
+                          size={20}
+                          color={Colors.darkBlue}
+                          style={styles.pinIcon}
+                        />
+                      )
+                    }
                   />
                 );
               }
@@ -326,6 +421,31 @@ const ChatList: React.FC = () => {
           />
         )}
       </View>
+
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancel}>
+        <TouchableWithoutFeedback onPress={handleCancel}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handlePinChat}>
+                <Text style={styles.modalButtonText}>
+                  {selectedChat?.pinned ? 'Unpin Chat' : 'Pin Chat'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleCancel}>
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -416,14 +536,40 @@ const styles = StyleSheet.create({
     color: Colors.darkBlue,
     marginLeft: 5,
   },
-  loadingContainer: {
+  chatListContainer: {
+    flex: 1,
+  },
+  pinContainer: {
+    marginTop: 2,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pinIcon: {
+    marginTop: 7,
+    alignSelf: 'center',
+  },
+  modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 50,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  chatListContainer: {
-    flex: 1,
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  modalButton: {
+    padding: 15,
+    backgroundColor: Colors.darkBlue,
+    marginVertical: 10,
+    borderRadius: 20,
+  },
+  modalButtonText: {
+    color: 'white',
+    textAlign: 'center',
   },
 });
 

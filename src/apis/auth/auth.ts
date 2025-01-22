@@ -1,6 +1,16 @@
 import {apiClient} from '../apiConfig';
 import {UserProfile} from './types';
 
+// export const registerUser = async (email: string, password: string,  deviceTokens: string[]) => {
+//   try {
+//     const response = await apiClient.post('/users/register', {email, password, deviceTokens});
+//     console.log('responseeeeee', response);
+//     return response.data;
+//   } catch (error: any) {
+//     throw new Error(error);
+//   }
+// };
+
 export const registerUser = async (email: string, password: string) => {
   try {
     const response = await apiClient.post('/users/register', {email, password});

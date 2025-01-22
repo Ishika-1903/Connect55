@@ -3,22 +3,19 @@ import store from '../controller/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const apiClient = axios.create({
-  baseURL: 'https://c1ea-14-98-138-141.ngrok-free.app/api/v1',
+  baseURL: 'https://da72-2401-4900-883e-d7d7-4fb8-63af-b0bf-160b.ngrok-free.app/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-export const baseURLPhoto =
-'https://c1ea-14-98-138-141.ngrok-free.app';
+export const baseURLPhoto = 'https://da72-2401-4900-883e-d7d7-4fb8-63af-b0bf-160b.ngrok-free.app';
 
 export const saveToken = async (token: string) => {
   try {
-    await AsyncStorage.setItem('authToken', token); 
+    await AsyncStorage.setItem('authToken', token);
     console.log('Token saved successfully');
-
     checkSavedToken();
-    
   } catch (error) {
     console.error('Error saving token to AsyncStorage:', error);
   }
@@ -38,20 +35,20 @@ const checkSavedToken = async () => {
 };
 
 const getToken = () => {
-  const state = store.getState(); 
-  console.log('state.auth.token', state.auth.token) 
-  return state.auth.token;        
+  const state = store.getState();
+  console.log('state.auth.token', state.auth.token);
+  return state.auth.token;
 };
 
 apiClient.interceptors.request.use(
-  async (config) => {
+  async config => {
     const token = getToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
-  }
+  },
 );

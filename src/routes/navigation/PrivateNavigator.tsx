@@ -17,65 +17,22 @@ import {BottomTabStackParamList} from './navigators';
 import {useNavigation} from '@react-navigation/native';
 import InviteScreen from '../../screens/InviteScreen/InviteScreen';
 import AboutGroupScreen from '../../screens/AboutGroupScreen/AboutGroupScreen';
+import EditAboutGroupScreen from '../../screens/EditAboutGroupScreen/EditAboutGroupScreen';
+import AddGroupMembers from '../../screens/AddGroupMembers/AddGroupMembers';
+import BottomTabNavigator from './BottomTabNavigator';
 
 const Tab = createBottomTabNavigator<BottomTabStackParamList>();
-
-function HomeTabs() {
-  const navigation = useNavigation();
-  // const tabs = [
-  //   {
-  //     name: 'Home',
-  //     icon: 'home',
-  //     onPress: () => navigation.navigate('Home'), // Replace with navigation logic
-  //   },
-  //   {
-  //     name: 'Search',
-  //     icon: 'search',
-  //     onPress: () => navigation.navigate('Search'), // Replace with navigation logic
-  //   },
-  //   {
-  //     name: 'email',
-  //     icon: 'email',
-  //     onPress: () => navigation.navigate('ChatList'), // Replace with navigation logic
-  //   },
-
-  //   {
-  //     name: 'Announcement',
-  //     icon: 'campaign',
-  //     onPress: () => navigation.navigate('Announcement'), // Replace with navigation logic
-  //   },
-  //   {
-  //     name: 'Profile',
-  //     icon: 'person',
-  //     onPress: () => navigation.navigate('Profile'), // Replace with navigation logic
-  //   },
-  // ];
-
-  // return (
-  //   <Tab.Navigator
-  //     initialRouteName={'Search'}
-  //     screenOptions={() => ({
-  //       headerShown: false,
-  //     })}
-  //     tabBar={() => <CustomBottomTab tabs={tabs} />}>
-  //     <Tab.Screen name="Home" component={HomeScreen} />
-  //     <Tab.Screen name="Search" component={SearchScreen} />
-  //     <Tab.Screen name="Announcement" component={AnnouncementScreen} />
-  //     <Tab.Screen name="Profile" component={ProfileScreen} />
-  //   </Tab.Navigator>
-  // );
-}
 
 const PrivateStack = createNativeStackNavigator();
 
 const PrivateNavigator = () => {
   return (
     <PrivateStack.Navigator screenOptions={{headerShown: false}}>
-      {/* <PrivateStack.Screen
+      <PrivateStack.Screen
         name="HomeTabs"
-        component={HomeTabs}
+        component={BottomTabNavigator}
         options={{headerShown: false}}
-      /> */}
+      />
       <PrivateStack.Screen name="Home" component={HomeScreen} />
       <PrivateStack.Screen name="Search" component={SearchScreen} />
       <PrivateStack.Screen name="Announcement" component={AnnouncementScreen} />
@@ -92,6 +49,11 @@ const PrivateNavigator = () => {
       <PrivateStack.Screen name="NewGroupChat" component={NewGroupChatScreen} />
       <PrivateStack.Screen name="Invite" component={InviteScreen} />
       <PrivateStack.Screen name="AboutGroup" component={AboutGroupScreen} />
+      <PrivateStack.Screen
+        name="EditAboutGroup"
+        component={EditAboutGroupScreen}
+      />
+      <PrivateStack.Screen name="AddGroupMembers" component={AddGroupMembers} />
       <PrivateStack.Screen name="Public" component={PublicNavigator} />
     </PrivateStack.Navigator>
   );

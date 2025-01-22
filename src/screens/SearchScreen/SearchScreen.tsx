@@ -18,6 +18,8 @@ import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
 import {TCText} from '../../components/text/CustomText';
 import {searchUsers} from '../../apis/auth/auth';
 import {baseURLPhoto} from '../../apis/apiConfig';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {Strings} from '../../utils/constants/strings';
 
 type SearchResult = {
   userId: string;
@@ -65,12 +67,26 @@ const SearchScreen = () => {
     {icon: 'person', onPress: () => navigation.navigate('Profile')},
   ];
 
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
   return (
     <View style={styles.container}>
+      <View></View>
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={[styles.backButton, {position: 'absolute', right: 350}]}>
+        <MaterialIcons name="arrow-back" size={24} style={styles.backIcon} />
+      </TouchableOpacity>
       <View style={styles.inputFieldContainer}>
         <CustomInputField
           lefticon="search"
           placeholder="Search"
+          rightIcon="close"
+          rightIconStyle={{color: Colors.darkBlue, fontSize: 15}}
+          onRightIconPress={handleClearSearch}
           value={searchQuery}
           onChangeText={handleSearch}
           placeholderTextStyle={{color: Colors.darkBlue}}
@@ -80,7 +96,9 @@ const SearchScreen = () => {
       </View>
 
       <View>
-        <Text style={styles.recentSearchesTitle}>Recent Searches</Text>
+        <Text style={styles.recentSearchesTitle}>
+          {Strings.RECENT_SEARCHES}
+        </Text>
         <View style={{marginTop: 20, marginHorizontal: 10}}>
           {isLoading ? (
             <ActivityIndicator size="large" color={Colors.darkBlue} />
@@ -132,14 +150,14 @@ const SearchScreen = () => {
           )}
         </View>
       </View>
-      <CustomBottomTab
+      {/* <CustomBottomTab
         tabs={tabs}
         style={{
           color: 'white',
           position: 'absolute',
           bottom: 0,
         }}
-      />
+      /> */}
     </View>
   );
 };
@@ -160,7 +178,7 @@ const styles = StyleSheet.create({
   inputFieldContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 30,
+    marginVertical: 60,
   },
   inputField: {
     width: '90%',
@@ -213,6 +231,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'red',
     marginTop: 10,
+  },
+  backIcon: {
+    color: Colors.darkBlue,
+    left: -20,
+    top: 20,
+  },
+  backButton: {
+    marginRight: 10,
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -7,25 +7,26 @@ import {
   TextInput,
   Image,
   ActivityIndicator,
+  ImageSourcePropType,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { TCText } from '../../components/text/CustomText';
+import {TCText} from '../../components/text/CustomText';
 import CommonHeader from '../../components/header/CommonHeader';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { Colors } from '../../utils/constants/colors';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {Colors} from '../../utils/constants/colors';
 import Icons from '../../utils/constants/Icons';
-import { getChatByChatId } from '../../apis/chat/chat';
-import { baseURLPhoto } from '../../apis/apiConfig';
+import {getChatByChatId} from '../../apis/chat/chat';
+import {baseURLPhoto} from '../../apis/apiConfig';
 import {
   CameraOptions,
   ImageLibraryOptions,
   launchCamera,
   launchImageLibrary,
 } from 'react-native-image-picker';
-import { CustomModal } from '../../components/CustomModal/CustomModal';
-import { Strings } from '../../utils/constants/strings';
-import { updateGroup } from '../../apis/chat/chat'; 
-import { useSelector } from 'react-redux';
+import {CustomModal} from '../../components/CustomModal/CustomModal';
+import {Strings} from '../../utils/constants/strings';
+import {updateGroup} from '../../apis/chat/chat';
+import {useSelector} from 'react-redux';
 
 type Participant = {
   name: string;
@@ -36,13 +37,13 @@ type Participant = {
 
 const AboutGroupScreen: React.FC = () => {
   const route = useRoute();
-  const { chatId } = route.params as { chatId: string };
+  const {chatId} = route.params as {chatId: string};
   const navigation = useNavigation();
 
   const [groupName, setGroupName] = useState<string>('');
   const [participants, setParticipants] = useState<Participant[]>([]);
-  const [isEditing, setIsEditing] = useState(false); 
-
+  const [isEditing, setIsEditing] = useState(false);
+  const [groupIcon, setGroupIcon] = useState<ImageSourcePropType | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
   const [profilePicture, setProfilePicture] = useState<{
     uri: string;
@@ -53,20 +54,28 @@ const AboutGroupScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const userId = useSelector((state: any) => state.auth.userId);
+  const [isAdmin, setIsAdmin] = useState(false); // Add this state to track if the user is an admin
 
   useEffect(() => {
     const fetchChatDetails = async () => {
       try {
         const response = await getChatByChatId(chatId);
         if (response?.data) {
-          const { groupName, participants, groupAdmin } = response.data;
-          console.log('groupAdmin', groupAdmin)
+          const {groupName, participants, groupAdmin, groupIcon} =
+            response.data;
+          if (groupAdmin.includes(userId)) {
+            setIsAdmin(true);
+            console.log('Current user is an admin');
+          } else {
+            setIsAdmin(false);
+          }
+
           const updatedParticipants = participants.map(
             (participant: Participant) => {
               return {
                 ...participant,
                 profilePicture: participant.profilePicture
-                  ? { uri: `${baseURLPhoto}${participant.profilePicture}` }
+                  ? {uri: `${baseURLPhoto}${participant.profilePicture}`}
                   : Icons.dummyProfile,
                 isAdmin: groupAdmin.includes(participant.userId),
               };
@@ -75,7 +84,11 @@ const AboutGroupScreen: React.FC = () => {
 
           setGroupName(groupName);
           setParticipants(updatedParticipants);
-
+          setGroupIcon(
+            groupIcon
+              ? {uri: `${baseURLPhoto}${groupIcon}`}
+              : Icons.defaultGroupIcon,
+          );
         }
       } catch (error) {
         console.error('Error fetching chat details:', error);
@@ -85,103 +98,12 @@ const AboutGroupScreen: React.FC = () => {
     };
 
     fetchChatDetails();
-  }, [chatId]);
+  }, [chatId, userId]);
 
-  const handleCameraLaunch = () => {
-    const options: CameraOptions = {
-      mediaType: 'photo',
-      includeBase64: false,
-      maxHeight: 2000,
-      maxWidth: 2000,
-    };
-
-    launchCamera(options, response => {
-      if (response.didCancel) {
-        console.log('User cancelled camera');
-      } else if (response.errorCode) {
-        console.log('Camera Error: ', response.errorCode);
-      } else {
-        const imageUri = response.assets?.[0]?.uri;
-        const imageName =
-          response.assets?.[0]?.fileName || 'profile_picture.jpg';
-        const imageType = response.assets?.[0]?.type || 'image/jpeg';
-        const imageSize = response.assets?.[0]?.fileSize || 0;
-
-        if (imageUri) {
-          setProfilePicture({
-            uri: imageUri,
-            name: imageName,
-            type: imageType,
-            size: imageSize,
-          });
-        }
-      }
-      setModalVisible(false);
-    });
-  };
-
-  const handleGalleryLaunch = () => {
-    const options: ImageLibraryOptions = {
-      mediaType: 'photo',
-      includeBase64: false,
-      maxHeight: 2000,
-      maxWidth: 2000,
-    };
-
-    launchImageLibrary(options, response => {
-      if (response.didCancel) {
-        console.log('User cancelled gallery');
-      } else if (response.errorCode) {
-        console.log('Gallery Error: ', response.errorCode);
-      } else {
-        const imageUri = response.assets?.[0]?.uri;
-        const imageName =
-          response.assets?.[0]?.fileName || 'profile_picture.jpg';
-        const imageType = response.assets?.[0]?.type || 'image/jpeg';
-        const imageSize = response.assets?.[0]?.fileSize || 0;
-
-        if (imageUri) {
-          setProfilePicture({
-            uri: imageUri,
-            name: imageName,
-            type: imageType,
-            size: imageSize,
-          });
-        }
-      }
-      setModalVisible(false);
-    });
-  };
-
-  const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
 
   const displayGroupName =
     groupName || participants.map(p => p.name).join(', ');
-
-  const handleSaveGroupName = async () => {
-    try {
-      const groupAdminIds = participants
-      .filter((participant) => participant.isAdmin)
-      .map((participant) => participant.userId);
-
-      const response = await updateGroup(
-        chatId,
-        userId,
-        groupName,
-        [], 
-        [],
-        groupAdminIds 
-      );
-
-      if (response) {
-        console.log('Group name updated successfully:', response);
-        setIsEditing(false); 
-      }
-    } catch (error) {
-      console.error('Error updating group name:', error);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -203,52 +125,50 @@ const AboutGroupScreen: React.FC = () => {
                   />
                 </View>
               }
+              rightContent={
+                isAdmin && (
+                  <View
+                    style={styles.leftContent}
+                    onStartShouldSetResponder={() => true}
+                    onResponderRelease={() => setIsEditing(true)}>
+                    <MaterialIcons
+                      name="edit"
+                      size={25}
+                      color={Colors.darkBlue}
+                      onPress={() =>
+                        navigation.navigate('EditAboutGroup', {chatId})
+                      }
+                    />
+                  </View>
+                )
+              }
             />
           </View>
 
           <View style={styles.profilePhotoContainer}>
             <View style={styles.profilePhotoWrapper}>
-              <Image
-                source={
-                  profilePicture
-                    ? { uri: profilePicture.uri }
-                    : Icons.dummyProfile
-                }
-                style={styles.profilePhoto}
-              />
-              <TouchableOpacity style={styles.editIcon} onPress={openModal}>
-                <MaterialIcons
-                  name="camera-alt"
-                  size={17}
-                  style={styles.editIconText}
+              {groupIcon ? (
+                <Image source={groupIcon} style={styles.profilePhoto} />
+              ) : (
+                <Image
+                  source={
+                    profilePicture
+                      ? {uri: profilePicture.uri}
+                      : Icons.dummyProfile
+                  }
+                  style={styles.profilePhoto}
                 />
-              </TouchableOpacity>
+              )}
             </View>
 
-            {isEditing ? (
-              <View style={styles.editGroupNameContainer}>
-                <TextInput
-                  style={styles.editGroupNameInput}
-                  value={groupName}
-                  onChangeText={setGroupName}
-                  autoFocus
-                />
-                <TouchableOpacity onPress={handleSaveGroupName}>
-                  <TCText style={styles.saveButton}>Save</TCText>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity onPress={() => setIsEditing(true)}>
-                <TCText style={styles.groupName}>{displayGroupName}</TCText>
-              </TouchableOpacity>
-            )}
+            <TCText style={styles.groupName}>{displayGroupName}</TCText>
           </View>
 
           <TCText style={styles.sectionHeading}>{Strings.GROUP_MEMBERS}</TCText>
           <FlatList
             data={participants}
             keyExtractor={item => item.userId}
-            renderItem={({ item }) => (
+            renderItem={({item}) => (
               <View style={styles.memberItem}>
                 <View style={styles.memberInfo}>
                   <Image
@@ -258,7 +178,9 @@ const AboutGroupScreen: React.FC = () => {
                   />
                   <View>
                     <TCText style={styles.memberName}>{item.name}</TCText>
-                    {item.isAdmin && <TCText style={styles.adminTag}>Admin</TCText>}
+                    {item.isAdmin && (
+                      <TCText style={styles.adminTag}>{Strings.ADMIN}</TCText>
+                    )}
                   </View>
                 </View>
               </View>
@@ -266,27 +188,6 @@ const AboutGroupScreen: React.FC = () => {
             ListEmptyComponent={
               <TCText style={styles.emptyText}>No members found</TCText>
             }
-          />
-
-          <CustomModal
-            title="Upload Profile Picture"
-            visible={isModalVisible}
-            onClose={closeModal}
-            containerStyle={styles.containerStyle}
-            buttons={[
-              {
-                text: 'Camera',
-                onPress: handleCameraLaunch,
-                buttonStyle: styles.modalButton,
-                textStyle: styles.modalButtonText,
-              },
-              {
-                text: 'Gallery',
-                onPress: handleGalleryLaunch,
-                buttonStyle: styles.modalButton,
-                textStyle: styles.modalButtonText,
-              },
-            ]}
           />
         </View>
       )}
@@ -405,7 +306,7 @@ const styles = StyleSheet.create({
   adminTag: {
     fontSize: 12,
     color: Colors.darkBlue,
-    fontWeight:'100',
+    fontWeight: '100',
     marginLeft: 10,
   },
   emptyText: {
@@ -432,6 +333,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  editIconWrapper: {
+    top: 10,
+    marginRight: 0,
   },
 });
 

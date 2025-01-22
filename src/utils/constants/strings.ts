@@ -15,6 +15,9 @@ export const Strings = {
    GROUPS:'Groups',
    TYPE_A_MESSAGE:'Type a message',
    INVITE :'Invite',
-   GROUP_MEMBERS: 'Group Members'
-  };
+   GROUP_MEMBERS: 'Group Members',
+   ADMIN:'Admin',
+   ADD_MEMBERS:'Add Members',
+   RECENT_SEARCHES:'Recent Searches',
+};
   

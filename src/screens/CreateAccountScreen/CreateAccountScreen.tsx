@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Image, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
+import { View, Image, ActivityIndicator, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { TCText } from '../../components/text/CustomText';
 import Icons from '../../utils/constants/Icons';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +15,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { registerUser } from '../../apis/auth/auth';
 import { setToken, setUserId } from '../../controller/authSlice';
 import { saveToken } from '../../apis/apiConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
 
@@ -58,6 +59,13 @@ const CreateAccountScreen: React.FC = () => {
     setLoading(true);
 
     try {
+      // const fcmToken = await AsyncStorage.getItem('fcmToken');
+      // if (!fcmToken) {
+      //   Alert.alert('Error', 'FCM token not available.');
+      //   setLoading(false);
+      //   return;
+      // }
+      // console.log('FCM Token:', fcmToken);
       const response = await registerUser(email, password);
       const userId = response?.data?.userId;
       const token = response?.data?.token;

@@ -17,20 +17,6 @@ type HomeScreenNavigationProp = StackNavigationProp<PrivateNavigatorParamList>;
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const [unreadCount, setUnreadCount] = useState(5);
-  const tabs = [
-    {icon: 'home', onPress: () => console.log('Home pressed')},
-    {icon: 'search', onPress: () => navigation.navigate('Search')},
-
-    // {icon: 'add-box', onPress: () => console.log('Home pressed')},
-    {
-      icon: 'email',
-      onPress: () => navigation.navigate('ChatList'),
-      unreadCount: unreadCount,
-    },
-    {icon: 'campaign', onPress: () => navigation.navigate('Announcement')},
-    {icon: 'person', onPress: () => navigation.navigate('Profile')},
-  ];
-
   return (
     <View style={styles.container}>
       <CommonHeader
@@ -38,23 +24,11 @@ const HomeScreen: React.FC = () => {
         rightContent={
           <TouchableOpacity>
             <MaterialIcons name="add-box" size={30} color={Colors.darkBlue} />
-            {/* <View style={styles.unreadCount}>
-              <TCText style={styles.unreadText}>5</TCText>
-            </View> */}
           </TouchableOpacity>
         }
       />
 
       <PostSection posts={posts} />
-
-      <CustomBottomTab
-        tabs={tabs}
-        style={{
-          color: 'white',
-          position: 'absolute',
-          bottom: 0,
-        }}
-      />
     </View>
   );
 };

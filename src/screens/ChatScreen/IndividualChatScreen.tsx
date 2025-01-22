@@ -8,13 +8,18 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import ChatMessage from '../../components/chatComponent/ChatMessage';
 import {Colors} from '../../utils/constants/colors';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {useNavigation} from '@react-navigation/native';
 import {Strings} from '../../utils/constants/strings';
-import {getChatByChatId, sendMessage} from '../../apis/chat/chat';
+import {
+  fetchChatByPagination,
+  getChatByChatId,
+  sendMessage,
+} from '../../apis/chat/chat';
 import {useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../controller/store';
@@ -30,13 +35,14 @@ import {getMqttClient} from '../../utils/mqttClient';
 import {getUserData} from '../../apis/auth/auth';
 import Icons from '../../utils/constants/Icons';
 import CommonChatHeader from '../../components/chatComponent/ChatHeader';
+import { getInitials } from '../../utils/utils';
 
 const IndividualChatScreen = () => {
   const navigation = useNavigation();
   const flatListRef = useRef<FlatList<any>>(null);
   const route = useRoute();
   const userId = useSelector((state: RootState) => state.auth.userId);
-  const {chatId} = route.params;
+  const {chatId, chatUserId: routeChatUserId} = route.params;
 
   const chatUserId = useSelector((state: RootState) => state.auth.chatUserId);
   console.log('chatuserIdddd', chatUserId);
@@ -46,23 +52,6 @@ const IndividualChatScreen = () => {
       profilePicture: string | null;
     };
   } | null>(null);
-
-  useEffect(() => {
-    if (chatUserId) {
-      const fetchUserData = async () => {
-        try {
-          const response = await getUserData(chatUserId);
-          console.log('Fetched user data:', response.data);
-          setUserData(response);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      };
-
-      fetchUserData();
-    }
-  }, [chatUserId]);
-
   const [messages, setMessages] = useState([]);
   const [participants, setParticipants] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -74,6 +63,65 @@ const IndividualChatScreen = () => {
     type: string;
     size: number;
   } | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastMessageId, setLastMessageId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const idToUse = routeChatUserId || chatUserId;
+
+    if (idToUse) {
+      const fetchUserData = async () => {
+        try {
+          const response = await getUserData(idToUse);
+          console.log('Fetched user data:', response.data);
+          setUserData(response);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      };
+
+      fetchUserData();
+    }
+  }, [routeChatUserId, chatUserId]);
+
+  const fetchOlderMessages = async () => {
+    if (!hasMore || isLoading) return;
+    setIsLoading(true);
+    try {
+      const olderMessages = await fetchChatByPagination(
+        chatId,
+        lastMessageId,
+        5,
+      ); // Fetch older messages
+      if (olderMessages.length > 0) {
+        const formattedMessages = olderMessages.map(msg => ({
+          id: msg.messageId,
+          message: msg.content,
+          isSender: msg.senderId === userId,
+          timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          media: msg.media
+            ? {
+                uri: msg.media.startsWith('/')
+                  ? `${baseURLPhoto}${msg.media}`
+                  : msg.media,
+              }
+            : null,
+        }));
+        setMessages(prevMessages => [...formattedMessages, ...prevMessages]);
+        setLastMessageId(olderMessages[olderMessages.length - 1].messageId); // Update last message ID
+      } else {
+        setHasMore(false); // No more messages to load
+      }
+    } catch (error) {
+      console.error('Error fetching older messages:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
@@ -250,7 +298,7 @@ const IndividualChatScreen = () => {
           );
         }
       } catch (error) {
-        console.error('Error fetching chat details:', error);
+        console.error('Error fetching chat detailssssss:', error);
       }
     };
 
@@ -319,15 +367,25 @@ const IndividualChatScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{flex: 1}}>
           <CommonChatHeader
-            profilePictures={[
+            // profilePictures={[
+            //   userData?.data.profilePicture
+            //     ? {uri: `${baseURLPhoto}${userData?.data.profilePicture}`}
+            //     : [],
+            // ]}
+            profilePictures={
               userData?.data.profilePicture
-                ? {uri: `${baseURLPhoto}${userData?.data.profilePicture}`}
-                : Icons.dummyProfile,
-            ]}
+                ? [{uri: `${baseURLPhoto}${userData?.data.profilePicture}`}]
+                : [] 
+            }
+            profileInitials={
+              userData?.data.profilePicture
+                ? undefined
+                : getInitials(userData?.data.name || 'Unknown')
+            }
             names={[userData?.data.name || 'Unknown']}
             onBackPress={onBackPress}
             groupName={null}
-            onNamePress={() => navigation.navigate('Profile', { chatUserId })}
+            onNamePress={() => navigation.navigate('Profile', {chatUserId})}
           />
           <FlatList
             ref={flatListRef}
@@ -339,6 +397,7 @@ const IndividualChatScreen = () => {
                 isSender={item.isSender}
                 timestamp={item.timestamp}
                 media={item.media}
+                // status="delivered"
               />
             )}
             contentContainerStyle={styles.messageList}
@@ -346,6 +405,13 @@ const IndividualChatScreen = () => {
               flatListRef.current?.scrollToEnd({animated: true})
             }
             onLayout={() => flatListRef.current?.scrollToEnd({animated: true})}
+            // onEndReached={fetchOlderMessages}
+            // onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              isLoading ? (
+                <ActivityIndicator size="small" color={Colors.darkBlue} />
+              ) : null
+            }
             keyboardShouldPersistTaps="handled"
           />
           <View

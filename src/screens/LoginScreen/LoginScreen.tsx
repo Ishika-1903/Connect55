@@ -1,5 +1,5 @@
-import React, {useRef, useState} from 'react';
-import {View, TextInput, TouchableOpacity, Image} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {View, TextInput, TouchableOpacity, Image, Text} from 'react-native';
 import {TCText} from '../../components/text/CustomText';
 import Icons from '../../utils/constants/Icons';
 import {styles} from './LoginScreen.styles';
@@ -14,21 +14,54 @@ import {validateEmail} from '../../utils/utils';
 import {login} from '../../apis/auth/auth';
 import {useDispatch} from 'react-redux';
 import {setToken, setUserId} from '../../controller/authSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
 type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
 
 const LoginScreen: React.FC = () => {
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const [isConnected, setIsConnected] = useState(true);
+
   const navigation = useNavigation<PublicNavigationProps>();
   const passwordInputRef = useRef<TextInput>(null);
-  
+
+  useEffect(() => {
+    const fetchFcmToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('fcmToken');
+        setFcmToken(token);
+      } catch (error) {
+        console.log('Error fetching FCM token from AsyncStorage:', error);
+      }
+    };
+
+    fetchFcmToken();
+  }, []);
+
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsConnected(state.isConnected ?? false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleSignIn = async () => {
+    if (!isConnected) {
+      setPasswordError(
+        'No internet connection. Please check your network and try again.',
+      );
+      return;
+    }
     try {
       setEmailError('');
       setPasswordError('');
@@ -48,10 +81,19 @@ const LoginScreen: React.FC = () => {
       const token = response.data.data.token;
       console.log('token in login', token);
       console.log('useerrId in login', userId);
+
+      await AsyncStorage.setItem('userToken', token);
+      await AsyncStorage.setItem('userId', userId.toString());
+
+      const storedUserId = await AsyncStorage.getItem('userId');
+      console.log('Stored UserId:', storedUserId);
+
       dispatch(setUserId(userId));
       dispatch(setToken(token));
 
       navigation.navigate('Private');
+
+      console.log('Email and Password are valid!', {email, password});
     } catch (error: any) {
       if (error.message) {
         if (error.message.toLowerCase().includes('email')) {
@@ -77,6 +119,14 @@ const LoginScreen: React.FC = () => {
     <View style={styles.screenContainer}>
       <View style={styles.container}>
         <Image source={Icons.logo} style={styles.heading} />
+        {/* {fcmToken && (
+          <View style={{marginTop: 20}}>
+            <Text style={{color: Colors.darkBlue, textAlign: 'center'}}>
+              FCM Token: {fcmToken}
+            </Text>
+          </View>
+        )} */}
+
         <View style={styles.inputContainer}>
           <CustomInputField
             lefticon="email"
@@ -90,7 +140,7 @@ const LoginScreen: React.FC = () => {
             }}
             containerStyle={{backgroundColor: '#EFEFEF'}}
             value={email}
-            returnKeyType="next" // Set return key to "next"
+            returnKeyType="next"
             onSubmitEditing={() => passwordInputRef.current?.focus()}
             onChangeText={text => {
               setEmail(text);

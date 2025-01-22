@@ -13,7 +13,7 @@ import CommonHeader from '../../components/header/CommonHeader';
 import {Colors} from '../../utils/constants/colors';
 import CustomCheckboxItem from '../../components/checkbox/CustomCheckBoxItem';
 import CustomButton from '../../components/buttons/CustomButton';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {searchUsers} from '../../apis/auth/auth';
 import {baseURLPhoto} from '../../apis/apiConfig';
 import Icons from '../../utils/constants/Icons';
@@ -21,7 +21,7 @@ import {RootState} from '../../controller/store';
 import {useSelector} from 'react-redux';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {Strings} from '../../utils/constants/strings';
-import {createChat} from '../../apis/chat/chat';
+import { getInitials } from '../../utils/utils';
 
 type SearchResultItem = {
   userId: string;
@@ -30,18 +30,37 @@ type SearchResultItem = {
   profilePicture?: string;
 };
 
-const NewGroupChatScreen: React.FC = () => {
+const AddGroupMembers: React.FC = () => {
   const navigation = useNavigation();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
-  const [groupName, setGroupName] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
   const userId = useSelector((state: RootState) => state.auth.userId);
 
   useEffect(() => {
     console.log('Updated Selected User IDs:', selectedUsers);
   }, [selectedUsers]);
+
+  const route = useRoute();
+  const {onMembersSelected} = route.params as {
+    onMembersSelected: (newMembers: Participant[]) => void;
+  };
+
+  const handleDoneSelecting = () => {
+    const newMembers = selectedUsers.map(userId => {
+      const user = searchResults.find(result => result.userId === userId);
+      return {
+        userId: user?.userId || '',
+        name: user?.name || '',
+        profilePicture: user?.profilePicture
+          ? {uri: `${baseURLPhoto}${user.profilePicture}`}
+        : getInitials(user?.name || 'Unknown'),
+      };
+    });
+
+    onMembersSelected(newMembers);
+    navigation.goBack();
+  };
 
   const handleSelectionChange = (id: string, isSelected: boolean) => {
     setSelectedUsers(prevSelected => {
@@ -55,7 +74,7 @@ const NewGroupChatScreen: React.FC = () => {
 
   const handleClearSearch = () => {
     setSearchText('');
-    setSearchResults([]); 
+    setSearchResults([]);
   };
 
   const handleSearch = async (query: string) => {
@@ -74,47 +93,6 @@ const NewGroupChatScreen: React.FC = () => {
     }
   };
 
-  const handleCreateGroupChat = async () => {
-    if (!userId) {
-      Alert.alert('Error', 'User is not logged in. Please log in again.');
-      return;
-    }
-
-    if (!groupName.trim()) {
-      Alert.alert('Error', 'Please enter a group name');
-      return;
-    }
-
-    try {
-      const participants = [userId, ...selectedUsers];
-      console.log('Participants:', participants);
-      // const groupIconData = groupIcon
-      // ? {
-      //     uri: groupIcon.uri,
-      //     name: groupIcon.fileName || 'group_icon.jpg',
-      //     type: groupIcon.type || 'image/jpeg',
-      //     size: groupIcon.size || 0,
-      //   }
-      // : null;
-      console.log('adminIddddd', userId);
-      const response = await createChat(
-        'group',
-        groupName,
-        participants,
-        userId,
-        // groupIconData,
-      );
-
-      if (response) {
-        Alert.alert('Success', 'Group Chat Created Successfully');
-        setModalVisible(false);
-        navigation.goBack();
-      }
-    } catch (error) {
-      console.error('Error creating group chat:', error);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -128,7 +106,7 @@ const NewGroupChatScreen: React.FC = () => {
                 onPress={() => navigation.goBack()}
               />
               <TCText style={styles.heading}>
-                {Strings.NEW_GROUP_CHAT.toUpperCase()}
+                {Strings.ADD_MEMBERS.toUpperCase()}
               </TCText>
             </View>
           }
@@ -174,45 +152,13 @@ const NewGroupChatScreen: React.FC = () => {
           ) : null
         }
       />
-      {selectedUsers.length > 1 && (
+      {selectedUsers.length > 0 && (
         <CustomButton
-          text={Strings.CREATE_GROUP_CHAT}
-          textStyle={{color: Colors.white}}
-          onPress={() => setModalVisible(true)}
-          style={styles.createGroupButton}
+          text="Done"
+          onPress={handleDoneSelecting}
+          style={styles.doneButton}
         />
       )}
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <TCText style={styles.modalTitle}>Enter Group Name</TCText>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Group Name"
-              value={groupName}
-              onChangeText={setGroupName}
-            />
-            <View style={styles.buttonContainer}>
-              <CustomButton
-                text="Create Group"
-                textStyle={{color: Colors.white}}
-                onPress={handleCreateGroupChat}
-                style={{...styles.modalButton, ...styles.modalButtonCreate}}
-              />
-              <CustomButton
-                text="Cancel"
-                textStyle={{color: Colors.darkBlue}}
-                onPress={() => setModalVisible(false)}
-                style={{...styles.modalButton, ...styles.modalButtonCancel}}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -248,58 +194,15 @@ const styles = StyleSheet.create({
   icon: {
     color: Colors.darkBlue,
   },
-  createGroupButton: {
+  doneButton: {
     width: '90%',
     height: 50,
-    backgroundColor: Colors.darkBlue,
+    backgroundColor: Colors.white,
     borderRadius: 30,
     alignSelf: 'center',
     bottom: 20,
     position: 'absolute',
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContainer: {
-    backgroundColor: Colors.white,
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: Colors.darkBlue,
-    textAlign: 'center',
-  },
-  modalInput: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingLeft: 10,
-    marginBottom: 20,
-    color: 'black',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButton: {
-    width: '48%',
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  modalButtonCreate: {
-    backgroundColor: Colors.darkBlue,
-  },
-  modalButtonCancel: {
-    backgroundColor: Colors.gray,
-  },
 });
 
-export default NewGroupChatScreen;
+export default AddGroupMembers;

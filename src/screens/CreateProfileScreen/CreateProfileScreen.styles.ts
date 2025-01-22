@@ -121,7 +121,6 @@ export const styles = StyleSheet.create({
     marginVertical: 4,
     borderColor: Colors.darkBlue,
     borderRadius: 8,
-
     shadowColor: '#334257',
     textShadowRadius: 20,
     shadowOffset: {width: 0, height: 2},
@@ -132,6 +131,9 @@ export const styles = StyleSheet.create({
     elevation: 4,
   },
 
+  multiSelectMargin: {
+    marginBottom: 10, 
+  },
   skillsLabel: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -213,7 +215,7 @@ export const styles = StyleSheet.create({
   selectedStyle: {
     borderRadius: 20,
     borderWidth: 2,
-    marginVertical: 2,
+    marginVertical: 10,
   },
   tickIcon: {
     marginLeft: 8,

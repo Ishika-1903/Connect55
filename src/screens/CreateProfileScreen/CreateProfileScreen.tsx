@@ -229,7 +229,6 @@ const CreateProfileScreen = () => {
   }, []);
 
   const saveProfile = async () => {
-
     if (!userId) {
       console.error('User ID is missing in create profile screen');
       return;
@@ -262,7 +261,7 @@ const CreateProfileScreen = () => {
         location,
         selectedDesignation,
       );
-      console.log('userId after api,', userId)
+      console.log('userId after api,', userId);
       console.log('3');
       console.log('Profile updated successfully:', updatedProfile);
       console.log('4');
@@ -334,7 +333,7 @@ const CreateProfileScreen = () => {
               <CustomInputField
                 containerStyle={styles.input}
                 textStyle={styles.placeholderTextStyle}
-                placeholder="Ishika Shahaney"
+                placeholder="Enter your name"
                 placeholderTextStyle={styles.placeholderColor}
                 value={name}
                 onChangeText={text => setName(text)}
@@ -443,7 +442,7 @@ const CreateProfileScreen = () => {
               />
               <TCText style={styles.label}>Skills</TCText>
               <MultiSelect
-                style={styles.input}
+                style={[styles.input, {marginBottom: 10}]}
                 mode="auto"
                 dropdownPosition="bottom"
                 placeholderStyle={styles.placeholderStyle}
@@ -484,12 +483,13 @@ const CreateProfileScreen = () => {
                 }}
                 selectedStyle={styles.selectedStyle}
               />
-
-              <TCText style={styles.label}>Work Location</TCText>
+              <TCText style={[styles.label, {marginTop: 20}]}>
+                Work Location
+              </TCText>
               <CustomInputField
                 containerStyle={styles.input}
                 textStyle={styles.placeholderTextStyle}
-                placeholder="Indore"
+                placeholder="Enter your work location"
                 value={location}
                 onChangeText={text => {
                   console.log('Work Location changed:', text);

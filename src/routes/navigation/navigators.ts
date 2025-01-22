@@ -10,8 +10,10 @@ export type PrivateNavigatorParamList = {
   NewMessage: undefined;
   NewGroupChat: undefined;
   GroupChatScreen: undefined;
-  Invite:undefined;
-  AboutGroup:undefined;
+  Invite: undefined;
+  AboutGroup: undefined;
+  EditAboutGroup: undefined;
+  AddGroupMembers: undefined;
   Public: {screen: keyof PublicNavigatorParamList; params?: any};
 };
 
@@ -37,8 +39,8 @@ export type AppStackParamList = {
 };
 
 export type BottomTabStackParamList = {
-    Home: undefined;
-    Search: undefined;
-    Announcement: undefined;
-    Profile: undefined;
-  };
+  Home: undefined;
+  Search: undefined;
+  Announcement: undefined;
+  Profile: undefined;
+};

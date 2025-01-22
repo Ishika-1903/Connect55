@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Colors } from '../../utils/constants/colors';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 type MediaType = {
   uri: string;
@@ -17,6 +18,7 @@ type ChatMessageProps = {
   profilePicture?: { uri: string } | number;
   media?: MediaType;
   onMediaPress?: () => void;
+  status?: 'delivered' | 'seen';
 };
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -27,6 +29,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   profilePicture,
   media,
   onMediaPress,
+  status, 
 }) => {
   return (
     <View
@@ -65,6 +68,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           </Text>
         )}
         <Text style={styles.timestamp}>{timestamp}</Text>
+
+        {isSender && status && (
+          <MaterialIcons
+            name={status === 'seen' ? 'check-circle' : 'check'}
+            size={15}
+            color={status === 'seen' ? 'yellow' : Colors.gray}
+            style={styles.statusIcon}
+          />
+        )}
       </View>
     </View>
   );
@@ -83,9 +95,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '75%',
+    maxWidth: '95%',
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 10,
     alignSelf: 'flex-start',
   },
   senderBubble: {
@@ -99,8 +111,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   mediaBubble: {
-    padding: 0, // Remove padding to avoid distortion around the image
-  },
+    padding: 0,   },
   mediaPreview: {
     width: 200,
     height: 200,
@@ -121,6 +132,12 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 20,
     marginHorizontal: 5,
+  },
+  statusIcon: {
+    position: 'absolute',
+    right: 0,
+    left:40,
+    bottom: 5,
   },
 });
 
