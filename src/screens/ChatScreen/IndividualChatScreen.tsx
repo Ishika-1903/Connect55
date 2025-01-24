@@ -125,7 +125,7 @@ const IndividualChatScreen = () => {
 
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
-  const CHAT_TOPIC = 'chat/6756cbb47b19daf3ef9e7048/messages';
+  const CHAT_TOPIC ='chat/+/messages';// 'chat/6756cbb47b19daf3ef9e7048/messages';
 
   const onBackPress = () => {
     navigation.goBack();
@@ -212,31 +212,32 @@ const IndividualChatScreen = () => {
     }
 
     const handleMessage = (topic: string, payload: Buffer) => {
-      if (topic === CHAT_TOPIC) {
+      console.log('handle message test print');
+      if (topic.startsWith("chat/") && topic.endsWith('/messages')) {
         const parsedMessage = JSON.parse(payload.toString());
         console.log('Message received:', parsedMessage);
 
-        const newMessage = {
-          id: parsedMessage.messageId || Date.now().toString(),
-          message: parsedMessage.content || '',
-          isSender: parsedMessage.senderId === userId,
-          timestamp: new Date(
-            parsedMessage.timestamp || Date.now(),
-          ).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          media: parsedMessage.media
-            ? {
-                uri: parsedMessage.media.startsWith('/')
-                  ? `${baseURLPhoto}${parsedMessage.media}`
-                  : parsedMessage.media,
-              }
-            : null,
-        };
+        // const newMessage = {
+        //   id: parsedMessage.messageId || Date.now().toString(),
+        //   message: parsedMessage.content || '',
+        //   isSender: parsedMessage.senderId === userId,
+        //   timestamp: new Date(
+        //     parsedMessage.timestamp || Date.now(),
+        //   ).toLocaleTimeString([], {
+        //     hour: '2-digit',
+        //     minute: '2-digit',
+        //   }),
+        //   media: parsedMessage.media
+        //     ? {
+        //         uri: parsedMessage.media.startsWith('/')
+        //           ? `${baseURLPhoto}${parsedMessage.media}`
+        //           : parsedMessage.media,
+        //       }
+        //     : null,
+        // };
 
         setMessages(prevMessages => {
-          return [...prevMessages, newMessage];
+          return [...prevMessages, parsedMessage];
         });
 
         flatListRef.current?.scrollToEnd({animated: true});
@@ -313,30 +314,33 @@ const IndividualChatScreen = () => {
 
     if (inputText.trim() === '' && !photo) return;
     try {
-      const response = await sendMessage(chatId, userId, inputText, photo);
+      // const response = await sendMessage(chatId, userId, inputText, photo);
 
-      const newMessage = {
-        id: response.data.messageId,
-        message: inputText,
-        isSender: true,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        media: photo ? {...photo} : null,
-      };
-      console.log('response in individual', response);
+      // const newMessage = {
+      //   id: response.data.messageId,
+      //   message: inputText,
+      //   isSender: true,
+      //   timestamp: new Date().toLocaleTimeString([], {
+      //     hour: '2-digit',
+      //     minute: '2-digit',
+      //   }),
+      //   media: photo ? {...photo} : null,
+      // };
+      // console.log('response in individual', response);
 
       const mqttClient = getMqttClient();
       if (mqttClient) {
+        console.log('mqtt')
+
         const messagePayload = JSON.stringify({
-          messageId: response.data.messageId,
+          messageId: `${chatId}_${Date.now()}`,
           content: inputText,
           senderId: userId,
           timestamp: new Date().toISOString(),
           media: photo || null,
         });
-        mqttClient.publish(CHAT_TOPIC, messagePayload);
+        console.log("messagePayload:",messagePayload);
+        mqttClient.publish(`chat/${chatId}/messages`, messagePayload);
       }
       setInputText('');
       setPhoto(null);

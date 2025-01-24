@@ -108,29 +108,29 @@ const GroupChatScreen = () => {
     if (!userId || (inputText.trim() === '' && !photo)) return;
 
     try {
-      const response = await sendMessage(chatId, userId, inputText, photo);
+      // const response = await sendMessage(chatId, userId, inputText, photo);
 
-      const newMessage = {
-        id: response.data.messageId,
-        message: inputText,
-        isSender: true,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        media: photo ? {...photo} : null,
-      };
+      // const newMessage = {
+      //   id: response.data.messageId,
+      //   message: inputText,
+      //   isSender: true,
+      //   timestamp: new Date().toLocaleTimeString([], {
+      //     hour: '2-digit',
+      //     minute: '2-digit',
+      //   }),
+      //   media: photo ? {...photo} : null,
+      // };
 
       const mqttClient = getMqttClient();
       if (mqttClient) {
         const messagePayload = JSON.stringify({
-          messageId: response.data.messageId,
+          messageId: `${chatId}_${Date.now()}`,
           content: inputText,
           senderId: userId,
           timestamp: new Date().toISOString(),
           media: photo || null,
         });
-        mqttClient.publish(CHAT_TOPIC, messagePayload);
+        mqttClient.publish(`chat/${chatId}/messages`, messagePayload);
       }
 
       setInputText('');

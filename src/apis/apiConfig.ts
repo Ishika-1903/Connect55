@@ -2,14 +2,15 @@ import axios from 'axios';
 import store from '../controller/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 export const apiClient = axios.create({
-  baseURL: 'https://da72-2401-4900-883e-d7d7-4fb8-63af-b0bf-160b.ngrok-free.app/api/v1',
+  baseURL: 'http://10.0.2.2:9000/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-export const baseURLPhoto = 'https://da72-2401-4900-883e-d7d7-4fb8-63af-b0bf-160b.ngrok-free.app';
+export const baseURLPhoto = 'http://localhost:9000';
 
 export const saveToken = async (token: string) => {
   try {
@@ -49,6 +50,20 @@ apiClient.interceptors.request.use(
     return config;
   },
   error => {
+    console.log('check',error);
     return Promise.reject(error);
+  },
+);
+apiClient.interceptors.response.use(
+  response => {
+    console.log('Response:', JSON.stringify(response.data, null, 2));
+    return response;
+  },
+  async error => {
+    console.log('Error:', JSON.stringify(error, null, 2));
+ 
+    let errorTitle = '';
+   
+    return Promise.reject(error.response);
   },
 );
