@@ -216,6 +216,10 @@ const IndividualChatScreen = () => {
       console.log('handle message test print');
       if (topic.startsWith("chat/") && topic.endsWith('/messages')) {
         const parsedMessage = JSON.parse(payload.toString());
+        
+        // Ignore messages originating from the server
+        if (parsedMessage.origin === 'server') return;
+        
         console.log('Message received:', parsedMessage);
 
         const newMessage = {
@@ -246,6 +250,7 @@ const IndividualChatScreen = () => {
     };
 
     mqttClient.on('message', handleMessage);
+
     mqttClient.subscribe(CHAT_TOPIC, err => {
       if (err) {
         console.error('Subscription error:', err);
@@ -339,7 +344,8 @@ const IndividualChatScreen = () => {
           senderId: userId,
           timestamp: new Date().toISOString(),
           media: photo || null,
-        });
+          origin:'client'});
+        
         console.log("messagePayload:",messagePayload);
         mqttClient.publish(`chat/${chatId}/messages`, messagePayload);
       }
