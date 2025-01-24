@@ -126,7 +126,7 @@ const IndividualChatScreen = () => {
 
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
-  const CHAT_TOPIC ='chat/+/messages';// 'chat/6756cbb47b19daf3ef9e7048/messages';
+  const CHAT_TOPIC ='chat/+/messages'; // 'chat/6756cbb47b19daf3ef9e7048/messages';
 
   const onBackPress = () => {
     navigation.goBack();
@@ -218,27 +218,27 @@ const IndividualChatScreen = () => {
         const parsedMessage = JSON.parse(payload.toString());
         console.log('Message received:', parsedMessage);
 
-        // const newMessage = {
-        //   id: parsedMessage.messageId || Date.now().toString(),
-        //   message: parsedMessage.content || '',
-        //   isSender: parsedMessage.senderId === userId,
-        //   timestamp: new Date(
-        //     parsedMessage.timestamp || Date.now(),
-        //   ).toLocaleTimeString([], {
-        //     hour: '2-digit',
-        //     minute: '2-digit',
-        //   }),
-        //   media: parsedMessage.media
-        //     ? {
-        //         uri: parsedMessage.media.startsWith('/')
-        //           ? `${baseURLPhoto}${parsedMessage.media}`
-        //           : parsedMessage.media,
-        //       }
-        //     : null,
-        // };
+        const newMessage = {
+          id: parsedMessage.messageId || Date.now().toString(),
+          message: parsedMessage.content || '',
+          isSender: parsedMessage.senderId === userId,
+          timestamp: new Date(
+            parsedMessage.timestamp || Date.now(),
+          ).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          media: parsedMessage.media
+            ? {
+                uri: parsedMessage.media.startsWith('/')
+                  ? `${baseURLPhoto}${parsedMessage.media}`
+                  : parsedMessage.media,
+              }
+            : null,
+        };
 
         setMessages(prevMessages => {
-          return [...prevMessages, parsedMessage];
+          return [...prevMessages, newMessage];
         });
 
         flatListRef.current?.scrollToEnd({animated: true});
@@ -343,6 +343,7 @@ const IndividualChatScreen = () => {
         console.log("messagePayload:",messagePayload);
         mqttClient.publish(`chat/${chatId}/messages`, messagePayload);
       }
+      console.log('chatId in handlesend', chatId)
       setInputText('');
       setPhoto(null);
       flatListRef.current?.scrollToEnd({animated: true});

@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee from '@notifee/react-native';
 
 const MQTT_BROKER_URL = 'ws://broker.emqx.io:8083/mqtt';
+// const MQTT_BROKER_URL ='mqtt://localhost:1883'
 
 function App(): React.JSX.Element {
 
