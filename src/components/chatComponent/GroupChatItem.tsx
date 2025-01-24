@@ -3,6 +3,7 @@ import {View, Text, Image, StyleSheet, TouchableOpacity} from 'react-native';
 import {Colors} from '../../utils/constants/colors';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Icons from '../../utils/constants/Icons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 type GroupChatItemProps = {
   members?: {id: number; name: string; profilePicture?: {uri: string}}[];
@@ -13,7 +14,7 @@ type GroupChatItemProps = {
   onPress: () => void;
   onLongPress?: () => void;
   isPinned?: boolean;
-  groupIcon?: {uri: string}; // Add group icon prop
+  groupIcon?: {uri: string};
   rightContent?: React.ReactNode;
 };
 
@@ -22,10 +23,10 @@ const GroupChatItem: React.FC<GroupChatItemProps> = ({
   groupName,
   lastMessage,
   time,
-  unreadCount,
+  unreadCount = 2,
   onPress,
   onLongPress,
-  isPinned,
+  isPinned = true,
   groupIcon,
   rightContent,
 }) => {
@@ -38,10 +39,7 @@ const GroupChatItem: React.FC<GroupChatItemProps> = ({
       style={styles.container}>
       <View style={styles.dpContainer}>
         {groupIcon ? (
-          <Image
-            source={groupIcon}
-            style={styles.groupIcon}
-          />
+          <Image source={groupIcon} style={styles.groupIcon} />
         ) : (
           <View style={styles.profileImagesContainer}>
             {displayedMembers.map((member, index) => (
@@ -74,6 +72,14 @@ const GroupChatItem: React.FC<GroupChatItemProps> = ({
           <Text style={styles.lastMessage} numberOfLines={1}>
             {lastMessage}
           </Text>
+          {isPinned && (
+            <MaterialIcons
+              name="push-pin"
+              size={20}
+              color={Colors.darkBlue}
+              style={styles.pinIcon}
+            />
+          )}
           {unreadCount > 0 && (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadCount}>{unreadCount}</Text>
@@ -81,18 +87,6 @@ const GroupChatItem: React.FC<GroupChatItemProps> = ({
           )}
         </View>
       </View>
-      {rightContent ? (
-        <View style={styles.rightContent}>{rightContent}</View>
-      ) : (
-        isPinned && (
-          <FontAwesome
-            name="thumbtack"
-            size={20}
-            color={Colors.darkBlue}
-            style={styles.pinIcon}
-          />
-        )
-      )}
     </TouchableOpacity>
   );
 };
@@ -102,9 +96,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 15,
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    backgroundColor: Colors.white,
   },
   dpContainer: {
     width: 40,
@@ -120,7 +112,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   groupIcon: {
-   width: 40,
+    width: 40,
     height: 40,
     borderRadius: 25,
   },
@@ -164,9 +156,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   pinIcon: {
-    position: 'absolute',
-    right: 10,
-    top: 10,
+    marginLeft: 2,
+    marginTop: 2,
+    right: 2,
   },
   rightContent: {
     marginLeft: 10,

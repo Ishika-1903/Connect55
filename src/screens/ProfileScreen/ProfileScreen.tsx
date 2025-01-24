@@ -13,7 +13,11 @@ import {Colors} from '../../utils/constants/colors';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {CustomModal} from '../../components/CustomModal/CustomModal';
 import {TCText} from '../../components/text/CustomText';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
 import {skills} from '../../utils/dummyData';
 import {PrivateNavigatorParamList} from '../../routes/navigation/navigators';
@@ -86,6 +90,12 @@ const ProfilePage: React.FC = () => {
     };
     fetchUserId();
   }, [userId, chatUserId, searchUserId]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setIdToFetch(userId);
+    }, [userId]),
+  );
 
   useEffect(() => {
     const fetchUserData = async () => {

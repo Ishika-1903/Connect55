@@ -59,13 +59,6 @@ const CreateAccountScreen: React.FC = () => {
     setLoading(true);
 
     try {
-      // const fcmToken = await AsyncStorage.getItem('fcmToken');
-      // if (!fcmToken) {
-      //   Alert.alert('Error', 'FCM token not available.');
-      //   setLoading(false);
-      //   return;
-      // }
-      // console.log('FCM Token:', fcmToken);
       const response = await registerUser(email, password);
       const userId = response?.data?.userId;
       const token = response?.data?.token;

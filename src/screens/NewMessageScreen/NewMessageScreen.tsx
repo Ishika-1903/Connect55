@@ -23,6 +23,7 @@ import {
   getChatByChatId,
   getChatByUserId,
 } from '../../apis/chat/chat';
+import { styles } from './NewMessageScreen.styles';
 
 type User = {
   userId: string;
@@ -57,83 +58,6 @@ const NewMessageScreen: React.FC = () => {
     setSearchQuery('');
     setSearchResults([]);
   };
-
-  // const handleChatPress = async (userIdToChat: string) => {
-  //   setSelectedUser(userIdToChat);
-
-  //    console.log('Selected User ID:', userIdToChat);
-  //   if (userIdToChat) {
-  //     try {
-  //       const response = await createChat(
-  //         'one-to-one',
-  //         '',
-  //         [userId, userIdToChat],
-  //         ''
-  //       );
-
-  //       if (response) {
-  //         Alert.alert(
-  //           'Chat Created',
-  //           'A new one-to-one chat has been created.',
-  //         );
-  //         navigation.navigate('IndividualChatScreen', {
-  //           chatId: response.chatId,
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error('Error creating chat:', error);
-  //       Alert.alert('Error', 'Something went wrong while creating the chat.');
-  //     }
-  //   }
-  // };
-
-  // const handleChatPress = async (userIdToChat: string) => {
-  //   setSelectedUser(userIdToChat);
-  //   console.log('Selected User ID:', userIdToChat);
-
-  //   if (userIdToChat) {
-  //     try {
-
-  //       const existingChat = await getChatByUserId(userId); // Pass current userId to check chats
-
-  //       if (existingChat?.data && Array.isArray(existingChat.data)) {
-  //         // Check if any chat exists between userId and userIdToChat with type 'one-to-one'
-  //         const chatExists = existingChat.data.find((chat: any) =>
-  //           chat.type === 'one-to-one' &&
-  //           chat.participants.some((participant: any) => participant.userId === userId) &&
-  //           chat.participants.some((participant: any) => participant.userId === userIdToChat)
-  //         );
-
-  //         if (chatExists) {
-  //           console.log('Chat already created. Chat ID:', chatExists._id);
-  //           Alert.alert('Chat Already Exists', `This chat already exists. Chat ID: ${chatExists._id}`);
-
-  //           // navigation.navigate('IndividualChatScreen', {
-  //           //   chatId: chatExists._id,
-  //           // });
-  //           return;
-  //         }
-  //       }
-
-  //       const response = await createChat(
-  //         'one-to-one',
-  //         '',
-  //         [userId, userIdToChat],
-  //         ''
-  //       );
-
-  //       if (response) {
-  //         Alert.alert('Chat Created', 'A new one-to-one chat has been created.');
-  //         // navigation.navigate('IndividualChatScreen', {
-  //         //   chatId: response.chatId,
-  //         // });
-  //       }
-  //     } catch (error) {
-  //       console.error('Error creating chat:', error);
-  //       Alert.alert('Error', 'Something went wrong while creating the chat.');
-  //     }
-  //   }
-  // };
 
   const handleChatPress = async (userIdToChat: string) => {
     setSelectedUser(userIdToChat);
@@ -297,86 +221,5 @@ const NewMessageScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  icon: {
-    color: Colors.darkBlue,
-  },
-  leftContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  heading: {
-    color: Colors.darkBlue,
-    fontSize: 20,
-    letterSpacing: 1.5,
-    fontWeight: 'bold',
-    left: 5,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  headerContainer: {
-    padding: 10,
-  },
-  inputFieldContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  inputField: {
-    width: '90%',
-    backgroundColor: Colors.gray,
-  },
-  chatItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray,
-  },
-  profilePicture: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
-  },
-  chatDetails: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.darkBlue,
-  },
-  bio: {
-    fontSize: 14,
-    color: 'gray',
-    marginTop: 5,
-  },
-  listContainer: {
-    paddingHorizontal: 10,
-  },
-  noResultsText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: 'gray',
-    marginTop: 20,
-  },
-  groupChat: {
-    flexDirection: 'row',
-    marginHorizontal: 5,
-    marginBottom: 20,
-  },
-  groupIcon: {
-    marginHorizontal: 20,
-  },
-  groupChatHeading: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.darkBlue,
-  },
-});
 
 export default NewMessageScreen;

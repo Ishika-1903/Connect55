@@ -169,8 +169,8 @@ const LoginScreen: React.FC = () => {
             }}
             containerStyle={{backgroundColor: '#EFEFEF'}}
             value={password}
-            ref={passwordInputRef} // Assign ref to password field
-            returnKeyType="done" // Set return key to "done"
+            ref={passwordInputRef} 
+            returnKeyType="done" 
             onChangeText={text => setPassword(text)}
           />
           {passwordError ? (

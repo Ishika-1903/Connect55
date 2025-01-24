@@ -82,28 +82,56 @@ const ChatList: React.FC = () => {
       const handleGetChatByUserId = async () => {
         try {
           let storedUserId = await AsyncStorage.getItem('userId');
+          console.log('Stored User ID:', storedUserId);
+
           if (!storedUserId) {
             storedUserId = userId;
+            console.log('Fallback to Passed User ID:', userId);
           }
+
           if (storedUserId) {
             setLoading(true);
             const response = await getChatByUserId(storedUserId);
+            console.log('API Response:', response);
 
             if (response?.success) {
               const chats = response.data.filter(
                 (chat: any) =>
                   chat.type === 'one-to-one' || chat.type === 'group',
               );
+              console.log('Filtered Chats:', chats);
+
               const filteredChats = chats.map((chat: any) => {
                 if (chat.type === 'one-to-one') {
                   const otherParticipant = chat.participants.find(
                     (participant: any) => participant.userId !== storedUserId,
                   );
-                  return {...chat, otherParticipant};
+
+                  const lastMessageId =
+                    chat.messages && chat.messages.length > 0
+                      ? chat.messages[chat.messages.length - 1].messageId
+                      : null;
+
+                  console.log('One-to-One Chat:', {
+                    ...chat,
+                    otherParticipant,
+                    lastMessageId,
+                  });
+
+                  return {...chat, otherParticipant, lastMessageId};
                 }
-                return chat;
+
+                const lastMessageId =
+                  chat.messages && chat.messages.length > 0
+                    ? chat.messages[chat.messages.length - 1].messageId
+                    : null;
+
+                console.log('Group Chat:', lastMessageId);
+
+                return {...chat, lastMessageId};
               });
 
+              console.log('Final Filtered Chats:', filteredChats);
               setChatData(filteredChats);
               setError(null);
             } else {
@@ -314,27 +342,31 @@ const ChatList: React.FC = () => {
                         : undefined
                     }
                     unreadCount={item.unreadCount}
+                    isPinned={item.pinned}
                     onPress={() => {
                       if (item.otherParticipant?.userId) {
                         dispatch(setChatUserId(item.otherParticipant.userId));
                       }
+                      console.log('Last Message ID:', item.lastMessageId);
                       navigation.navigate('IndividualChatScreen', {
                         chatId: item._id,
+                        lastMessageId: item.lastMessageId,
                       });
                     }}
                     onLongPress={() => handleLongPress(item)}
-                    rightContent={
-                      activeTab !== 'Pinned' && item.pinned && (
-                        <View style={styles.pinContainer}>
-                          <MaterialIcons
-                            name="push-pin"
-                            size={20}
-                            color={Colors.darkBlue}
-                            style={styles.pinIcon}
-                          />
-                        </View>
-                      )
-                    }
+                    // rightContent={
+                    //   activeTab !== 'Pinned' &&
+                    //   item.pinned && (
+                    //     <View style={styles.pinContainer}>
+                    //       <MaterialIcons
+                    //         name="push-pin"
+                    //         size={20}
+                    //         color={Colors.darkBlue}
+                    //         style={styles.pinIcon}
+                    //       />
+                    //     </View>
+                    //   )
+                    // }
                   />
                 );
               } else if (item.type === 'group') {
@@ -352,6 +384,7 @@ const ChatList: React.FC = () => {
                           : Icons.dummyProfile,
                       }))}
                     groupName={item.groupName}
+                    isPinned={item.pinned}
                     groupIcon={
                       item.groupIcon
                         ? {uri: `${baseURLPhoto}${item.groupIcon}`}
@@ -391,17 +424,17 @@ const ChatList: React.FC = () => {
                         chatId: item._id,
                       });
                     }}
-                    rightContent={
-                      activeTab !== 'Pinned' &&
-                      item.pinned && (
-                        <MaterialIcons
-                          name="push-pin"
-                          size={20}
-                          color={Colors.darkBlue}
-                          style={styles.pinIcon}
-                        />
-                      )
-                    }
+                    // rightContent={
+                    //   activeTab !== 'Pinned' &&
+                    //   item.pinned && (
+                    //     <MaterialIcons
+                    //       name="push-pin"
+                    //       size={20}
+                    //       color={Colors.darkBlue}
+                    //       style={styles.pinIcon}
+                    //     />
+                    //   )
+                    // }
                   />
                 );
               }

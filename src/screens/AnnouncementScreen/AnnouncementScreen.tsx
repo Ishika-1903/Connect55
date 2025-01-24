@@ -1,10 +1,6 @@
-import React, { useState } from 'react';
-import {
-  Image,
-  View,
-} from 'react-native';
+import React, {useState} from 'react';
+import {Image, View} from 'react-native';
 import Icons from '../../utils/constants/Icons';
-import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
 import {styles} from './AnnouncementScreen.styles';
 import PostSection from '../../components/postSection/PostSection';
 import CommonHeader from '../../components/header/CommonHeader';
@@ -43,36 +39,14 @@ const posts = [
 
 const AnnouncementScreen: React.FC = ({navigation}: any) => {
   const [unreadCount, setUnreadCount] = useState(5);
-  // const tabs = [
-  //   {icon: 'home', onPress: () => navigation.navigate('Home')},
-  //   {icon: 'search', onPress: () => navigation.navigate('Search')},
-  //   // {icon: 'add-box', onPress: () => console.log('New Post pressed')},
-  //   {
-  //     icon: 'email',
-  //     onPress: () => navigation.navigate('ChatList'),
-  //     unreadCount: unreadCount,
-    
-  //   },
-  //   {icon: 'campaign', onPress: () => navigation.navigate('Announcement')},
-  //   {icon: 'person', onPress: () => navigation.navigate('Profile')},
-  // ];
 
   return (
     <View style={styles.container}>
-<CommonHeader
+      <CommonHeader
         leftContent={<Image source={Icons.logo} style={styles.logo} />}
-
       />
 
       <PostSection posts={posts} />
-      {/* <CustomBottomTab
-        tabs={tabs}
-        style={{
-          color: 'white',
-          position: 'absolute',
-          bottom: 0,
-        }}
-      /> */}
     </View>
   );
 };

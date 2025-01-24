@@ -29,7 +29,7 @@ const authSlice = createSlice ({
             state.chatId = action.payload; 
             console.log('ChatId saved in Redux slice:', state.chatId);
         },
-        setChatUserId: (state, action: PayloadAction<string>) => { // Added setChatUserId
+        setChatUserId: (state, action: PayloadAction<string>) => { 
             state.chatUserId = action.payload; 
             console.log('ChatUserId saved in Redux slice:', state.chatUserId);
         }
