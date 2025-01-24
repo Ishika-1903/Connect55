@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import {
   View,
   TextInput,
@@ -23,11 +23,14 @@ type CustomInputFieldProps = {
   onChangeText?: (text: string) => void;
   secureTextEntry?: boolean;
   onRightIconPress?: () => void;
+  onLeftconPress?: () => void;
   onFocus?: () => void;
   editable?:boolean; 
+  returnKeyType?: 'next' | 'done' | 'go' | 'search' | 'send';
+  onSubmitEditing?: () => void;
 };
 
-const CustomInputField: React.FC<CustomInputFieldProps> = ({
+const CustomInputField = forwardRef<TextInput, CustomInputFieldProps>(({
   lefticon,
   lefticonStyle,
   rightIcon,
@@ -40,9 +43,12 @@ const CustomInputField: React.FC<CustomInputFieldProps> = ({
   onChangeText,
   secureTextEntry,
   onRightIconPress,
+  onLeftconPress,
   onFocus,
-  editable
-}) => {
+  editable,
+  returnKeyType,
+  onSubmitEditing
+}, ref) => {
   return (
     <View style={[styles.inputRow, containerStyle]}>
       {lefticon && (
@@ -50,9 +56,11 @@ const CustomInputField: React.FC<CustomInputFieldProps> = ({
           name={lefticon}
           size={24}
           style={[styles.icon, lefticonStyle]}
+          onPress={onLeftconPress}
         />
       )}
       <TextInput
+         ref={ref} 
         style={[styles.input, textStyle]}
         placeholder={placeholder}
         placeholderTextColor={placeholderTextStyle?.color}
@@ -61,6 +69,9 @@ const CustomInputField: React.FC<CustomInputFieldProps> = ({
         secureTextEntry={secureTextEntry}
         editable={editable}
         onFocus={onFocus}
+        returnKeyType={returnKeyType} 
+        onSubmitEditing={onSubmitEditing}
+        blurOnSubmit={false} 
       />
       {rightIcon && (
         <MaterialIcons
@@ -72,7 +83,7 @@ const CustomInputField: React.FC<CustomInputFieldProps> = ({
       )}
     </View>
   );
-};
+});
 
 export default CustomInputField;
 

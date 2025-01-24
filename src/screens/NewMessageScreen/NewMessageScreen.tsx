@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import CommonHeader from '../../components/header/CommonHeader';
 import {TCText} from '../../components/text/CustomText';
 import {Strings} from '../../utils/constants/strings';
@@ -8,15 +8,200 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  Alert,
 } from 'react-native';
 import {Colors} from '../../utils/constants/colors';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {useNavigation} from '@react-navigation/native';
-import {newChatData} from '../../utils/dummyData';
+import {searchUsers} from '../../apis/auth/auth';
+import Icons from '../../utils/constants/Icons';
+import {baseURLPhoto} from '../../apis/apiConfig';
+import {useSelector} from 'react-redux';
+import {
+  createChat,
+  getChatByChatId,
+  getChatByUserId,
+} from '../../apis/chat/chat';
+
+type User = {
+  userId: string;
+  profilePicture: string | null;
+  name: string | null;
+  bio: string | null;
+};
 
 const NewMessageScreen: React.FC = () => {
   const navigation = useNavigation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const userId = useSelector((state: any) => state.auth.userId);
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length > 0) {
+      try {
+        const response = await searchUsers(query);
+        setSearchResults(response.data.data);
+      } catch (error) {
+        console.error('Error fetching search results:', error);
+        setSearchResults([]);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  // const handleChatPress = async (userIdToChat: string) => {
+  //   setSelectedUser(userIdToChat);
+
+  //    console.log('Selected User ID:', userIdToChat);
+  //   if (userIdToChat) {
+  //     try {
+  //       const response = await createChat(
+  //         'one-to-one',
+  //         '',
+  //         [userId, userIdToChat],
+  //         ''
+  //       );
+
+  //       if (response) {
+  //         Alert.alert(
+  //           'Chat Created',
+  //           'A new one-to-one chat has been created.',
+  //         );
+  //         navigation.navigate('IndividualChatScreen', {
+  //           chatId: response.chatId,
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error('Error creating chat:', error);
+  //       Alert.alert('Error', 'Something went wrong while creating the chat.');
+  //     }
+  //   }
+  // };
+
+  // const handleChatPress = async (userIdToChat: string) => {
+  //   setSelectedUser(userIdToChat);
+  //   console.log('Selected User ID:', userIdToChat);
+
+  //   if (userIdToChat) {
+  //     try {
+
+  //       const existingChat = await getChatByUserId(userId); // Pass current userId to check chats
+
+  //       if (existingChat?.data && Array.isArray(existingChat.data)) {
+  //         // Check if any chat exists between userId and userIdToChat with type 'one-to-one'
+  //         const chatExists = existingChat.data.find((chat: any) =>
+  //           chat.type === 'one-to-one' &&
+  //           chat.participants.some((participant: any) => participant.userId === userId) &&
+  //           chat.participants.some((participant: any) => participant.userId === userIdToChat)
+  //         );
+
+  //         if (chatExists) {
+  //           console.log('Chat already created. Chat ID:', chatExists._id);
+  //           Alert.alert('Chat Already Exists', `This chat already exists. Chat ID: ${chatExists._id}`);
+
+  //           // navigation.navigate('IndividualChatScreen', {
+  //           //   chatId: chatExists._id,
+  //           // });
+  //           return;
+  //         }
+  //       }
+
+  //       const response = await createChat(
+  //         'one-to-one',
+  //         '',
+  //         [userId, userIdToChat],
+  //         ''
+  //       );
+
+  //       if (response) {
+  //         Alert.alert('Chat Created', 'A new one-to-one chat has been created.');
+  //         // navigation.navigate('IndividualChatScreen', {
+  //         //   chatId: response.chatId,
+  //         // });
+  //       }
+  //     } catch (error) {
+  //       console.error('Error creating chat:', error);
+  //       Alert.alert('Error', 'Something went wrong while creating the chat.');
+  //     }
+  //   }
+  // };
+
+  const handleChatPress = async (userIdToChat: string) => {
+    setSelectedUser(userIdToChat);
+    console.log('Selected User ID:', userIdToChat);
+
+    if (userIdToChat) {
+      try {
+        const existingChat = await getChatByUserId(userId);
+
+        if (existingChat?.data && Array.isArray(existingChat.data)) {
+          const chatExists = existingChat.data.find(
+            (chat: any) =>
+              chat.type === 'one-to-one' &&
+              chat.participants.some(
+                (participant: any) => participant.userId === userId,
+              ) &&
+              chat.participants.some(
+                (participant: any) => participant.userId === userIdToChat,
+              ),
+          );
+
+          if (chatExists) {
+            console.log('Chat already created. Chat ID:', chatExists._id);
+
+            const chatDetails = await getChatByChatId(chatExists._id);
+
+            if (chatDetails) {
+              console.log('Existing Chat Details:', chatDetails);
+              Alert.alert(
+                'Chat Already Exists',
+                `This chat already exists. Chat ID: ${chatExists._id}`,
+              );
+
+              navigation.navigate('IndividualChatScreen', {
+                chatId: chatExists._id,
+                chatUserId: userIdToChat,
+              });
+
+              return;
+            }
+          }
+        }
+
+        const response = await createChat(
+          'one-to-one',
+          '',
+          [userId, userIdToChat],
+          '',
+        );
+
+        if (response) {
+          console.log('New Chat Created. Chat ID:', response.data.chatId);
+          Alert.alert(
+            'Chat Created',
+            'A new one-to-one chat has been created.',
+          );
+
+          navigation.navigate('IndividualChatScreen', {
+            chatId: response.data.chatId,
+            chatUserId: userIdToChat,
+          });
+        }
+      } catch (error) {
+        console.error('Error creating chat:', error);
+        Alert.alert('Error', 'Something went wrong while creating the chat.');
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -24,7 +209,12 @@ const NewMessageScreen: React.FC = () => {
         <CommonHeader
           leftContent={
             <View style={styles.leftContent}>
-              <MaterialIcons name="arrow-back" size={25} style={styles.icon} />
+              <MaterialIcons
+                name="arrow-back"
+                size={25}
+                style={styles.icon}
+                onPress={() => navigation.goBack()}
+              />
               <TCText style={styles.heading}>
                 {Strings.NEW_MESSAGE.toUpperCase()}
               </TCText>
@@ -37,10 +227,28 @@ const NewMessageScreen: React.FC = () => {
           lefticon="search"
           placeholder="Search"
           placeholderTextStyle={{color: Colors.darkBlue}}
+          rightIcon="close"
+          rightIconStyle={{color: Colors.darkBlue, fontSize: 15}}
+          onRightIconPress={handleClearSearch}
           containerStyle={styles.inputField}
-          textStyle={{color:Colors.darkBlue}}
+          textStyle={{color: Colors.darkBlue}}
+          value={searchQuery}
+          onChangeText={handleSearch}
         />
       </View>
+
+      <TouchableOpacity
+        style={styles.groupChat}
+        onPress={() => navigation.navigate('Invite')}>
+        <MaterialIcons
+          name="person-add"
+          size={20}
+          color={Colors.darkBlue}
+          style={styles.groupIcon}
+        />
+        <TCText style={styles.groupChatHeading}>{Strings.INVITE}</TCText>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.groupChat}
         onPress={() => navigation.navigate('NewGroupChat')}>
@@ -56,18 +264,34 @@ const NewMessageScreen: React.FC = () => {
       </TouchableOpacity>
 
       <FlatList
-        data={newChatData}
-        keyExtractor={item => item.id}
+        data={searchResults}
+        keyExtractor={item => item.userId}
         renderItem={({item}) => (
-          <View style={styles.chatItem}>
-            <Image source={item.profilePicture} style={styles.profilePicture} />
+          <TouchableOpacity
+            onPress={() => handleChatPress(item.userId)}
+            style={styles.chatItem}>
+            <Image
+              source={
+                item.profilePicture
+                  ? {uri: `${baseURLPhoto}${item.profilePicture}`}
+                  : Icons.dummyProfile
+              }
+              style={styles.profilePicture}
+            />
             <View style={styles.chatDetails}>
-              <TCText style={styles.name}>{item.name}</TCText>
-              <TCText style={styles.bio}>{item.bio}</TCText>
+              <TCText style={styles.name}>{item.name || 'Unnamed'}</TCText>
+              <TCText style={styles.bio}>
+                {item.bio || 'No bio available'}
+              </TCText>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={
+          <TCText style={styles.noResultsText}>
+            {searchQuery ? 'No results found.' : 'Search for users.'}
+          </TCText>
+        }
       />
     </View>
   );
@@ -86,7 +310,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     letterSpacing: 1.5,
     fontWeight: 'bold',
-    left:5,
+    left: 5,
   },
   container: {
     flex: 1,
@@ -104,19 +328,6 @@ const styles = StyleSheet.create({
   inputField: {
     width: '90%',
     backgroundColor: Colors.gray,
-  },
-  groupChat: {
-    flexDirection: 'row',
-    marginHorizontal: 5,
-    marginBottom: 20,
-  },
-  groupIcon: {
-    marginHorizontal: 20,
-  },
-  groupChatHeading: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.darkBlue,
   },
   chatItem: {
     flexDirection: 'row',
@@ -146,6 +357,25 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 10,
+  },
+  noResultsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: 'gray',
+    marginTop: 20,
+  },
+  groupChat: {
+    flexDirection: 'row',
+    marginHorizontal: 5,
+    marginBottom: 20,
+  },
+  groupIcon: {
+    marginHorizontal: 20,
+  },
+  groupChatHeading: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.darkBlue,
   },
 });
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1075139041976",
+    "project_id": "connect55-5073d",
+    "storage_bucket": "connect55-5073d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1075139041976:android:dff51bf24496f06a05724d",
+        "android_client_info": {
+          "package_name": "com.connect55"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAM2mM5ur9tsk_ZsYaohGjoVsOUVor8PDo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

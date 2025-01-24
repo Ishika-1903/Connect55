@@ -8,20 +8,45 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { Colors } from '../../utils/constants/colors';
+import {Colors} from '../../utils/constants/colors';
+import {useNavigation} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../controller/store';
 
 type ChatHeaderProps = {
+  groupName: string | null;
   profilePictures: ImageSourcePropType[];
+  profileInitials?: string;
   names: string[];
   onBackPress: () => void;
+  onNamePress?: () => void;
+  groupIcon?: ImageSourcePropType;
 };
 
 const CommonChatHeader: React.FC<ChatHeaderProps> = ({
+  groupName,
   profilePictures,
+  profileInitials,
   names,
   onBackPress,
+  onNamePress,
+  groupIcon,
 }) => {
+  const navigation = useNavigation();
+  const chatUserId = useSelector((state: RootState) => state.auth.chatUserId);
+
   const renderProfilePictures = () => {
+    if (groupIcon) {
+      return <Image source={groupIcon} style={styles.groupIcon} />;
+    }
+    if (profileInitials) {
+      return (
+        <View style={styles.intialsProfile}>
+          <Text style={styles.initials}>{profileInitials}</Text>
+        </View>
+      );
+    }
+
     const picturesToShow = profilePictures.slice(0, 4);
 
     const getPositionStyles = (index: number) => {
@@ -58,13 +83,22 @@ const CommonChatHeader: React.FC<ChatHeaderProps> = ({
     );
   };
 
-  const renderNames = () => {
+  const renderHeaderName = () => {
+    if (groupName) {
+      return groupName;
+    }
+
     if (names.length <= 3) {
       return names.join(', ');
     }
+
     const displayedNames = names.slice(0, 3).join(', ');
     const remainingCount = names.length - 3;
     return `${displayedNames} +${remainingCount} others`;
+  };
+
+  const handleNamePress = () => {
+    navigation.navigate('Profile', {chatUserId});
   };
 
   return (
@@ -72,10 +106,14 @@ const CommonChatHeader: React.FC<ChatHeaderProps> = ({
       <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
         <MaterialIcons name="arrow-back" size={24} style={styles.backIcon} />
       </TouchableOpacity>
+
       {renderProfilePictures()}
-      <Text style={styles.name} numberOfLines={1}>
-        {renderNames()}
-      </Text>
+
+      <TouchableOpacity onPress={onNamePress}>
+        <Text style={styles.name} numberOfLines={1}>
+          {renderHeaderName()}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -108,6 +146,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderWidth: 1,
     borderColor: Colors.white,
+  },
+  groupIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 25,
   },
   singlePicture: {
     top: 5,
@@ -148,7 +191,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.darkBlue,
-    flex: 1,
+    marginHorizontal: 10,
+  },
+  intialsProfile: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.darkBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  initials: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
 

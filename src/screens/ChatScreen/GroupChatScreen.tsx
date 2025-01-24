@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -12,168 +12,190 @@ import ChatMessage from '../../components/chatComponent/ChatMessage';
 import {Colors} from '../../utils/constants/colors';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import Icons from '../../utils/constants/Icons';
-import {useNavigation} from '@react-navigation/native';
-import IndividualChatHeader from '../../components/chatComponent/ChatHeader';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import CommonChatHeader from '../../components/chatComponent/ChatHeader';
-import { Strings } from '../../utils/constants/strings';
+import {Strings} from '../../utils/constants/strings';
+import {getChatByChatId, sendMessage} from '../../apis/chat/chat';
+import {RootState} from '../../controller/store';
+import {useSelector} from 'react-redux';
+import {baseURLPhoto} from '../../apis/apiConfig';
+import {getMqttClient} from '../../utils/mqttClient';
 
 const GroupChatScreen = () => {
   const navigation = useNavigation();
-  const flatListRef = useRef(null);
-  const [messages, setMessages] = useState([
-    {
-      id: '1',
-      message: 'Hi there!',
-      isSender: true,
-      timestamp: '10:00 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '2',
-      message: `Hey! I hope you’re doing well. Let me know if you're free tomorrow to finalize the details.`,
-      isSender: false,
-      timestamp: '10:01 AM',
-      profilePicture: Icons.profilePicture2,
-    },
-    {
-      id: '3',
-      message: 'I am good, thank you!',
-      isSender: true,
-      timestamp: '10:02 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '4',
-      message: 'Sure! Let’s plan for noon.',
-      isSender: true,
-      timestamp: '10:03 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '5',
-      message: `Sounds good. Don't forget the notes we discussed.`,
-      isSender: false,
-      timestamp: '10:05 AM',
-      profilePicture: Icons.profilePicture3,
-    },
-    {
-      id: '6',
-      message: 'Got it. I’ll bring them along.',
-      isSender: true,
-      timestamp: '10:07 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '7',
-      message: `By the way, did you get a chance to check my email?`,
-      isSender: false,
-      timestamp: '10:08 AM',
-      profilePicture: Icons.profilePicture2,
-    },
-    {
-      id: '8',
-      message: 'Not yet. I’ll check it out today.',
-      isSender: true,
-      timestamp: '10:10 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '9',
-      message: `Okay. Let’s discuss the changes when you’ve reviewed it.`,
-      isSender: false,
-      timestamp: '10:12 AM',
-      profilePicture: Icons.profilePicture3,
-    },
-    {
-      id: '10',
-      message: `Sure. Is there anything urgent?`,
-      isSender: true,
-      timestamp: '10:14 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '11',
-      message: `Yes, there's a meeting on Friday afternoon. Can you confirm your availability?`,
-      isSender: false,
-      timestamp: '10:15 AM',
-      profilePicture: Icons.profilePicture2,
-    },
-    {
-      id: '12',
-      message: `I’ll check my schedule and let you know.`,
-      isSender: true,
-      timestamp: '10:17 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '13',
-      message: `Thanks! Also, don’t forget to RSVP for the team event next month.`,
-      isSender: false,
-      timestamp: '10:18 AM',
-      profilePicture: Icons.profilePicture3,
-    },
-    {
-      id: '14',
-      message: `Will do! Looking forward to it.`,
-      isSender: true,
-      timestamp: '10:20 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '15',
-      message: `Have you tried the new restaurant near the office?`,
-      isSender: false,
-      timestamp: '10:22 AM',
-      profilePicture: Icons.profilePicture2,
-    },
-    {
-      id: '16',
-      message: `Not yet, but I’ve heard good reviews. Let’s plan a visit!`,
-      isSender: true,
-      timestamp: '10:24 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-    {
-      id: '17',
-      message: `Absolutely! I’ll check the menu and let you know.`,
-      isSender: false,
-      timestamp: '10:25 AM',
-      profilePicture: Icons.profilePicture3,
-    },
-    {
-      id: '18',
-      message: `Thanks! Let’s catch up soon.`,
-      isSender: true,
-      timestamp: '10:27 AM',
-      profilePicture: Icons.profilePicture1,
-    },
-  ]);
-
+  const flatListRef = useRef<FlatList<any>>(null);
+  const route = useRoute();
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [participantNames, setParticipantNames] = useState<string[]>([]);
+  const [headerProfilePictures, setHeaderProfilePictures] = useState<string[]>(
+    [],
+  );
+  const [groupName, setGroupName] = useState<string | null>(null);
+  const [groupIcon, setGroupIcon] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<{
+    uri: string;
+    name: string;
+    type: string;
+    size: number;
+  } | null>(null);
 
-  const scrollToEnd = () => {
-    flatListRef.current?.scrollToEnd({animated: true});
-  };
+  const [participants, setParticipants] = useState([]);
 
-  const handleSendMessage = () => {
-    if (inputText.trim() === '') return;
-    const newMessage = {
-      id: Date.now().toString(),
-      message: inputText,
-      isSender: true,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      profilePicture: Icons.profilePicture1,
+  const {chatId} = route.params;
+  const CHAT_TOPIC = 'chat/6756cbb47b19daf3ef9e7048/messages';
+  const userId = useSelector((state: RootState) => state.auth.userId);
+
+  useEffect(() => {
+    const mqttClient = getMqttClient();
+    if (!mqttClient) {
+      console.warn('MQTT client is not connected yet!');
+      return;
+    }
+
+    const handleMessage = (topic: string, payload: Buffer) => {
+      if (topic === CHAT_TOPIC) {
+        const parsedMessage = JSON.parse(payload.toString());
+        const sender = participants.find(
+          (participant: {userId: string}) => participant.userId === parsedMessage.senderId,
+        );
+        
+        const newMessage = {
+          id: parsedMessage.messageId || Date.now().toString(),
+          message: parsedMessage.content || '',
+          isSender: parsedMessage.senderId === userId,
+          timestamp: new Date(
+            parsedMessage.timestamp || Date.now(),
+          ).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          media: parsedMessage.media
+            ? {
+                uri: parsedMessage.media.startsWith('/')
+                  ? `${baseURLPhoto}${parsedMessage.media}`
+                  : parsedMessage.media,
+              }
+            : null,
+        };
+
+        setMessages(prevMessages => [...prevMessages, newMessage]);
+        flatListRef.current?.scrollToEnd({animated: true});
+      }
     };
-    setMessages(prevMessages => [...prevMessages, newMessage]);
-    setInputText('');
-    setTimeout(scrollToEnd, 100);
+
+    mqttClient.on('message', handleMessage);
+    mqttClient.subscribe(CHAT_TOPIC, err => {
+      if (err) {
+        console.error('Subscription error:', err);
+      } else {
+        console.log(`Subscribed to topic in Group Chat: ${CHAT_TOPIC}`);
+      }
+    });
+
+    return () => {
+      mqttClient.unsubscribe(CHAT_TOPIC, err => {
+        if (err) {
+          console.error('Unsubscribe error:', err);
+        }
+      });
+      mqttClient.removeListener('message', handleMessage);
+    };
+  }, [userId]);
+
+  const handleSendMessage = async () => {
+    if (!userId || (inputText.trim() === '' && !photo)) return;
+
+    try {
+      // const response = await sendMessage(chatId, userId, inputText, photo);
+
+      // const newMessage = {
+      //   id: response.data.messageId,
+      //   message: inputText,
+      //   isSender: true,
+      //   timestamp: new Date().toLocaleTimeString([], {
+      //     hour: '2-digit',
+      //     minute: '2-digit',
+      //   }),
+      //   media: photo ? {...photo} : null,
+      // };
+
+      const mqttClient = getMqttClient();
+      if (mqttClient) {
+        const messagePayload = JSON.stringify({
+          messageId: `${chatId}_${Date.now()}`,
+          content: inputText,
+          senderId: userId,
+          timestamp: new Date().toISOString(),
+          media: photo || null,
+        });
+        mqttClient.publish(`chat/${chatId}/messages`, messagePayload);
+      }
+
+      setInputText('');
+      setPhoto(null);
+      flatListRef.current?.scrollToEnd({animated: true});
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const fetchChatDetails = async () => {
+      try {
+        const response = await getChatByChatId(chatId);
+        if (response?.data) {
+          const {messages, participants, groupName, groupIcon} = response.data;
+
+          setParticipants(participants);
+
+          const names = participants.map(
+            (participant: {name: string}) => participant.name,
+          );
+          const profilePictures = participants.map(
+            (participant: {profilePicture: string}) =>
+              participant.profilePicture
+                ? {uri: `${baseURLPhoto}${participant.profilePicture}`}
+                : Icons.profilePicture1,
+          );
+
+          setParticipantNames(names);
+          setHeaderProfilePictures(profilePictures);
+          setGroupName(groupName || null);
+          setGroupIcon(groupIcon ? {uri: `${baseURLPhoto}${groupIcon}`} : null);
+
+          const messagesWithProfilePictures = messages.map(msg => {
+            const sender = participants.find(
+              (participant: {userId: string}) =>
+                participant.userId === msg.senderId,
+            );
+            const profilePicture = sender?.profilePicture
+              ? {uri: `${baseURLPhoto}${sender.profilePicture}`}
+              : Icons.profilePicture1;
+
+            return {
+              id: msg.messageId,
+              message: msg.content, 
+              isSender: msg.senderId === userId,
+              timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              profilePicture,
+            };
+          });
+
+          setMessages(messagesWithProfilePictures);
+        }
+      } catch (error) {
+        console.error('Error fetching chat details:', error);
+      }
+    };
+    fetchChatDetails();
+  }, [chatId, userId]);
+
+  useEffect(() => {
     const showListener = Keyboard.addListener('keyboardDidShow', () =>
       setIsKeyboardOpen(true),
     );
@@ -186,6 +208,10 @@ const GroupChatScreen = () => {
     };
   }, []);
 
+  const scrollToEnd = () => {
+    flatListRef.current?.scrollToEnd({animated: true});
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -194,26 +220,12 @@ const GroupChatScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{flex: 1}}>
           <CommonChatHeader
-            profilePictures={[
-              Icons.profilePicture1,
-              Icons.profilePicture2,
-              Icons.profilePicture3,
-              Icons.profilePicture1,
-              Icons.profilePicture2,
-              Icons.profilePicture3,
-            ]}
-            names={[
-              'Ishika',
-              'Ayushi',
-              'Rahul',
-              'Ankit',
-              'Neha',
-              'Siddharth',
-              'Riya',
-              'Priya',
-              'Kunal',
-            ]}
-            onBackPress={() => console.log('Back Pressed')}
+            groupName={groupName}
+            groupIcon={groupIcon}
+            profilePictures={headerProfilePictures}
+            names={participantNames}
+            onBackPress={() => navigation.goBack()}
+            onNamePress={() => navigation.navigate('AboutGroup', {chatId})}
           />
           <FlatList
             ref={flatListRef}
@@ -229,8 +241,6 @@ const GroupChatScreen = () => {
               />
             )}
             contentContainerStyle={styles.messageList}
-            //onContentSizeChange={scrollToEnd}
-            //onLayout={scrollToEnd}
             keyboardShouldPersistTaps="handled"
           />
           <View

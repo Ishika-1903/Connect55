@@ -13,7 +13,11 @@ export const Strings = {
    MESSAGE:'Message',
    DIRECT_MESSAGES:'Direct Messages',
    GROUPS:'Groups',
-   TYPE_A_MESSAGE:'Type a message'
-
-  };
+   TYPE_A_MESSAGE:'Type a message',
+   INVITE :'Invite',
+   GROUP_MEMBERS: 'Group Members',
+   ADMIN:'Admin',
+   ADD_MEMBERS:'Add Members',
+   RECENT_SEARCHES:'Recent Searches',
+};
   

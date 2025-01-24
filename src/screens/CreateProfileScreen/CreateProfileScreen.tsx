@@ -5,7 +5,7 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CustomInputField from '../../components/inputField/CustomInputField';
@@ -14,7 +14,7 @@ import {Colors} from '../../utils/constants/colors';
 import {TCText} from '../../components/text/CustomText';
 import CustomButton from '../../components/buttons/CustomButton';
 import {Dropdown, MultiSelect} from 'react-native-element-dropdown';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {PrivateNavigatorParamList} from '../../routes/navigation/navigators';
 import {
@@ -23,9 +23,16 @@ import {
   launchCamera,
   launchImageLibrary,
 } from 'react-native-image-picker';
-import {getOrganisationData, getUserData, updateUserProfile} from '../../apis/auth/auth';
+import {
+  getOrganisationData,
+  getUserData,
+  updateUserProfile,
+} from '../../apis/auth/auth';
 import {CustomModal} from '../../components/CustomModal/CustomModal';
-import { styles } from './CreateProfileScreen.styles';
+import {styles} from './CreateProfileScreen.styles';
+import {RootState} from '../../controller/store';
+import {useSelector} from 'react-redux';
+import {baseURLPhoto} from '../../apis/apiConfig';
 
 type CreateProfileScreenNavigationProp = StackNavigationProp<
   PrivateNavigatorParamList,
@@ -39,25 +46,82 @@ type DropDownItem = {
 
 const CreateProfileScreen = () => {
   const navigation = useNavigation<CreateProfileScreenNavigationProp>();
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
     null,
   );
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]); 
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedDesignation, setSelectedDesignation] = useState('');
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [profilePicture, setProfilePicture] = useState<{
+    uri: string;
+    name: string;
+    type: string;
+    size: number;
+  } | null>(null);
 
   const [skillsData, setSkillsData] = useState<DropDownItem[]>([]);
   const [departmentsData, setDepartmentsData] = useState<DropDownItem[]>([]);
   const [designationsData, setDesignationsData] = useState<DropDownItem[]>([]);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
-  const route = useRoute();
-  const { userId, userEmail} = route.params;
-  console.log('userrrrrid', userId)
-  console.log('userEmail', userEmail)
+  const userId = useSelector((state: RootState) => state.auth.userId);
+  console.log('userrrrId in profile', userId);
+
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      console.log('Fetching user data on first load...');
+
+      if (!userId) {
+        console.error('User ID is missing in Profile Screen');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await getUserData(userId);
+
+        if (response?.data?.name) {
+          console.log('Returning user, fetching full data...');
+          setName(response.data.name || '');
+          setBio(response.data.bio || '');
+          setUserEmail(response.data.email || '');
+          setLocation(response.data.location || '');
+          setSelectedDepartment(response.data.department || '');
+          setSelectedSkills(response.data.skills || []);
+          setSelectedDesignation(response.data.designation || '');
+          setLocation(response.data.workLocation || '');
+          const profilePictureURL = response.data.profilePicture
+            ? `${baseURLPhoto}${response.data.profilePicture}`
+            : null;
+          setProfilePicture(
+            profilePictureURL ? {uri: profilePictureURL} : null,
+          );
+        } else {
+          if (response?.data?.email) {
+            setUserEmail(response.data.email);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [userId]);
 
   const handleCameraLaunch = () => {
     const options: CameraOptions = {
@@ -74,7 +138,19 @@ const CreateProfileScreen = () => {
         console.log('Camera Error: ', response.errorCode);
       } else {
         const imageUri = response.assets?.[0]?.uri;
-        setProfilePicture(imageUri || null);
+        const imageName =
+          response.assets?.[0]?.fileName || 'profile_picture.jpg';
+        const imageType = response.assets?.[0]?.type || 'image/jpeg';
+        const imageSize = response.assets?.[0]?.fileSize || 0;
+
+        if (imageUri) {
+          setProfilePicture({
+            uri: imageUri,
+            name: imageName,
+            type: imageType,
+            size: imageSize,
+          });
+        }
       }
       setModalVisible(false);
     });
@@ -95,7 +171,19 @@ const CreateProfileScreen = () => {
         console.log('Gallery Error: ', response.errorCode);
       } else {
         const imageUri = response.assets?.[0]?.uri;
-        setProfilePicture(imageUri || null);
+        const imageName =
+          response.assets?.[0]?.fileName || 'profile_picture.jpg';
+        const imageType = response.assets?.[0]?.type || 'image/jpeg';
+        const imageSize = response.assets?.[0]?.fileSize || 0;
+
+        if (imageUri) {
+          setProfilePicture({
+            uri: imageUri,
+            name: imageName,
+            type: imageType,
+            size: imageSize,
+          });
+        }
       }
       setModalVisible(false);
     });
@@ -107,6 +195,7 @@ const CreateProfileScreen = () => {
   useEffect(() => {
     const fetchOrganisationData = async () => {
       try {
+        setLoading(true);
         const response = await getOrganisationData();
         const {skills, departments, designations} = response.data;
         setSkillsData(
@@ -131,50 +220,71 @@ const CreateProfileScreen = () => {
         );
       } catch (error) {
         console.error('Error fetching organisation data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchOrganisationData();
   }, []);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userData = await getUserData(userId);
-        console.log('Fetched user data:', userData);
-      } catch (error: any) {
-        console.error('Error fetching user data:', error.message);
-      }
-    };
-  
-    fetchUserData();
-  }, [userId]);
-
   const saveProfile = async () => {
-    console.log('Name:', name);
-    console.log('Bio:', bio);
-    console.log('Selected Department:', selectedDepartment);
-    console.log('Skills:', selectedSkills);
-    console.log('Profile Picture:', profilePicture);
-    console.log('Work Location:', location);
-    console.log('Selected Designation:', selectedDesignation);
+    if (!userId) {
+      console.error('User ID is missing in create profile screen');
+      return;
+    }
+
+    if (
+      !name ||
+      !bio ||
+      !location ||
+      !selectedDepartment ||
+      !selectedSkills.length ||
+      !selectedDesignation ||
+      !profilePicture
+    ) {
+      console.error('Please fill in all the required fields!');
+      setLoading(true);
+    }
+
+    setLoading(true);
+    console.log('1');
     try {
+      console.log('2');
       const updatedProfile = await updateUserProfile(
         userId,
         name,
         bio,
         selectedDepartment || '',
         selectedSkills,
-        profilePicture ? new File([profilePicture], 'profile.jpg') : null,
+        profilePicture,
         location,
         selectedDesignation,
       );
+      console.log('userId after api,', userId);
+      console.log('3');
       console.log('Profile updated successfully:', updatedProfile);
+      console.log('4');
       navigation.navigate('Private', {screen: 'Home'});
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
-    // navigation.navigate('Private', {screen: 'Home'});
+  };
+
+  const handleChangePassword = async () => {
+    console.log('Changing password:', {
+      currentPassword,
+      newPassword,
+      confirmNewPassword,
+    });
+    if (newPassword !== confirmNewPassword) {
+      console.error("Passwords don't match!");
+      return;
+    }
+    console.log('Password changed successfully.');
+    setIsChangePasswordVisible(false);
   };
 
   const onBackPress = () => {
@@ -185,14 +295,22 @@ const CreateProfileScreen = () => {
     <ScrollView>
       <View style={styles.container}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} style={styles.backIcon} />
+          <MaterialIcons
+            name="arrow-back"
+            size={24}
+            style={styles.backIcon}
+            onPress={() => navigation.goBack()}
+          />
         </TouchableOpacity>
 
         <View style={styles.profilePhotoContainer}>
           <View style={styles.profilePhotoWrapper}>
-            {/* <Image source={Icons.profilePicture2} style={styles.profilePhoto} /> */}
             <Image
-              source={profilePicture ? {uri: profilePicture} : Icons.profilePicture11}
+              source={
+                profilePicture
+                  ? {uri: profilePicture.uri}
+                  : Icons.profilePicture1
+              }
               style={styles.profilePhoto}
             />
 
@@ -215,7 +333,7 @@ const CreateProfileScreen = () => {
               <CustomInputField
                 containerStyle={styles.input}
                 textStyle={styles.placeholderTextStyle}
-                placeholder="Ishika Shahaney"
+                placeholder="Enter your name"
                 placeholderTextStyle={styles.placeholderColor}
                 value={name}
                 onChangeText={text => setName(text)}
@@ -228,7 +346,7 @@ const CreateProfileScreen = () => {
                 placeholder="Tell us about yourself"
                 placeholderTextStyle={styles.placeholderColor}
                 value={bio}
-                onChangeText={text => setBio(text)} 
+                onChangeText={text => setBio(text)}
               />
 
               <TCText style={styles.label}>Email Address</TCText>
@@ -240,21 +358,6 @@ const CreateProfileScreen = () => {
                 editable={false}
                 placeholderTextStyle={styles.placeholderColor}
               />
-
-              {/* <TCText style={styles.label}>Password</TCText>
-              <CustomInputField
-                //rightIcon={showPassword ? 'visibility-off' : 'visibility'}
-                lefticonStyle={{fontSize: 20}}
-                //onRightIconPress={() => setShowPassword(!showPassword)}
-                placeholder="•••••••"
-                placeholderTextStyle={{color: '#888'}}
-                secureTextEntry={!showPassword}
-                textStyle={styles.placeholderTextStyle}
-                containerStyle={styles.input}
-                value={userPassword}
-                editable={false}
-                onChangeText={text => setPassword(text)}
-              /> */}
 
               <TCText style={styles.label}>Designation</TCText>
               <Dropdown
@@ -316,16 +419,13 @@ const CreateProfileScreen = () => {
                 onChange={item => {
                   setSelectedDepartment(item.value);
                 }}
-                // renderLeftIcon={() => (
-                //   <MaterialIcons color="black" name="computer" size={20} />
-                // )}
                 renderItem={item => {
                   const isSelected = selectedDepartment === item.value;
                   return (
                     <View
                       style={[
                         styles.itemContainer,
-                        isSelected && {backgroundColor: 'transparent'}, // Override background
+                        isSelected && {backgroundColor: 'transparent'},
                       ]}>
                       <Text style={styles.itemText}>{item.label}</Text>
                       {isSelected && (
@@ -341,9 +441,8 @@ const CreateProfileScreen = () => {
                 }}
               />
               <TCText style={styles.label}>Skills</TCText>
-              {/* <View style={styles.dropdownWrapper}> */}
               <MultiSelect
-                style={styles.input}
+                style={[styles.input, {marginBottom: 10}]}
                 mode="auto"
                 dropdownPosition="bottom"
                 placeholderStyle={styles.placeholderStyle}
@@ -359,13 +458,9 @@ const CreateProfileScreen = () => {
                 searchPlaceholder="Search..."
                 value={selectedSkills}
                 onChange={item => {
-                  console.log('Selected Skills:', item);
                   setSelectedSkills(item);
                 }}
                 alwaysRenderSelectedItem={true}
-                // renderLeftIcon={() => (
-                //   <MaterialIcons color="black" name="domain" size={20} />
-                // )}
                 renderItem={item => {
                   const isSelected = selectedSkills.includes(item.value);
                   return (
@@ -388,35 +483,106 @@ const CreateProfileScreen = () => {
                 }}
                 selectedStyle={styles.selectedStyle}
               />
-
-              {/* </View> */}
-
-              <TCText style={styles.label}>Work Location</TCText>
+              <TCText style={[styles.label, {marginTop: 20}]}>
+                Work Location
+              </TCText>
               <CustomInputField
                 containerStyle={styles.input}
                 textStyle={styles.placeholderTextStyle}
-                placeholder="Indore"
+                placeholder="Enter your work location"
                 value={location}
                 onChangeText={text => {
-                  console.log('Work Location changed:', text); 
+                  console.log('Work Location changed:', text);
                   setLocation(text);
                 }}
                 placeholderTextStyle={styles.placeholderColor}
               />
+              {isChangePasswordVisible && (
+                <>
+                  <View style={styles.passwordSectionContainer}>
+                    <TCText style={styles.label}>Current Password</TCText>
+                    <CustomInputField
+                      rightIcon={
+                        showCurrentPassword ? 'visibility-off' : 'visibility'
+                      }
+                      onRightIconPress={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
+                      placeholder="Enter current password"
+                      placeholderTextStyle={{color: '#888'}}
+                      secureTextEntry={!showCurrentPassword}
+                      textStyle={{fontSize: 16, color: Colors.darkBlue}}
+                      containerStyle={styles.input}
+                      value={currentPassword}
+                      onChangeText={setCurrentPassword}
+                    />
+
+                    <TCText style={styles.label}>New Password</TCText>
+                    <CustomInputField
+                      rightIcon={
+                        showNewPassword ? 'visibility-off' : 'visibility'
+                      }
+                      onRightIconPress={() =>
+                        setShowNewPassword(!showNewPassword)
+                      }
+                      placeholder="Enter new password"
+                      placeholderTextStyle={{color: '#888'}}
+                      secureTextEntry={!showNewPassword}
+                      textStyle={{fontSize: 16, color: Colors.darkBlue}}
+                      containerStyle={styles.input}
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                    />
+
+                    <TCText style={styles.label}>Confirm New Password</TCText>
+                    <CustomInputField
+                      rightIcon={
+                        showConfirmNewPassword ? 'visibility-off' : 'visibility'
+                      }
+                      onRightIconPress={() =>
+                        setShowConfirmNewPassword(!showConfirmNewPassword)
+                      }
+                      placeholder="Confirm new password"
+                      placeholderTextStyle={{color: '#888'}}
+                      secureTextEntry={!showConfirmNewPassword}
+                      textStyle={{fontSize: 16, color: Colors.darkBlue}}
+                      containerStyle={styles.input}
+                      value={confirmNewPassword}
+                      onChangeText={setConfirmNewPassword}
+                    />
+                  </View>
+                </>
+              )}
+
+              {/* <CustomButton
+                text="CHANGE PASSWORD"
+                onPress={() =>
+                  setIsChangePasswordVisible(!isChangePasswordVisible)
+                }
+                textStyle={styles.buttonText}
+                style={styles.button}
+              /> */}
 
               <CustomButton
                 text="SAVE"
                 onPress={saveProfile}
-                textStyle={styles.buttonText}
-                style={styles.button}
+                textStyle={
+                  isChangePasswordVisible
+                    ? styles.disabledText
+                    : styles.buttonText
+                }
+                style={
+                  isChangePasswordVisible
+                    ? styles.disabledButton
+                    : styles.button
+                }
+                disabled={isChangePasswordVisible}
               />
             </View>
           </ScrollView>
         </View>
       </View>
-      <View>
-        
-      </View>
+      <View></View>
       <CustomModal
         title="Upload Profile Picture"
         visible={isModalVisible}
@@ -437,10 +603,13 @@ const CreateProfileScreen = () => {
           },
         ]}
       />
+      {loading && (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={Colors.darkBlue} />
+        </View>
+      )}
     </ScrollView>
   );
 };
-
-
 
 export default CreateProfileScreen;

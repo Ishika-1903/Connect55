@@ -15,13 +15,13 @@ export type RegisterResponse = {
   }
 
 export type UserProfile = {
-  _id: string;
+  userId: string;
   name: string;
   bio: string;
   designation: string | null;
   department: string;
   skills: string[];
   workLocation: string | null;
-  profilePicture: string;  
+  profilePicture: { uri: string; name: string; type: string; size: number };
   __v: number;
 }

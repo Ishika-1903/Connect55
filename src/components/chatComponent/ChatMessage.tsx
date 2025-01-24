@@ -1,13 +1,24 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Colors } from '../../utils/constants/colors';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
+type MediaType = {
+  uri: string;
+  name: string;
+  type: string;
+  size: number;
+};
 
 type ChatMessageProps = {
   message: string;
   isSender: boolean;
   timestamp: string;
-  isGroupChat?: boolean; 
+  isGroupChat?: boolean;
   profilePicture?: { uri: string } | number;
+  media?: MediaType;
+  onMediaPress?: () => void;
+  status?: 'delivered' | 'seen';
 };
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -16,6 +27,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   timestamp,
   isGroupChat,
   profilePicture,
+  media,
+  onMediaPress,
+  status, 
 }) => {
   return (
     <View
@@ -28,22 +42,41 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         <Image source={profilePicture} style={styles.profilePicture} />
       )}
 
-
       <View
         style={[
           styles.messageBubble,
           isSender ? styles.senderBubble : styles.receiverBubble,
+          media ? styles.mediaBubble : {}, 
         ]}
       >
-        <Text
-          style={[
-            styles.messageText,
-            { color: isSender ? Colors.white : 'black' },
-          ]}
-        >
-          {message}
-        </Text>
+        {media ? (
+          <TouchableOpacity onPress={onMediaPress} disabled={!onMediaPress}>
+            <Image
+              source={{ uri: media.uri }}
+              style={styles.mediaPreview}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        ) : (
+          <Text
+            style={[
+              styles.messageText,
+              { color: isSender ? Colors.white : Colors.black },
+            ]}
+          >
+            {message}
+          </Text>
+        )}
         <Text style={styles.timestamp}>{timestamp}</Text>
+
+        {isSender && status && (
+          <MaterialIcons
+            name={status === 'seen' ? 'check-circle' : 'check'}
+            size={15}
+            color={status === 'seen' ? 'yellow' : Colors.gray}
+            style={styles.statusIcon}
+          />
+        )}
       </View>
     </View>
   );
@@ -62,33 +95,49 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '75%',
-    padding: 5,
-    borderRadius: 15,
+    maxWidth: '95%',
+    padding: 10,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
   },
   senderBubble: {
     backgroundColor: '#1F509A',
     marginRight: 10,
+    alignSelf: 'flex-end',
   },
   receiverBubble: {
     backgroundColor: Colors.gray,
     marginLeft: 10,
+    alignSelf: 'flex-start',
+  },
+  mediaBubble: {
+    padding: 0,   },
+  mediaPreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 5,
   },
   messageText: {
-    fontSize: 16,
+    fontSize: 14,
+    marginBottom: 5,
   },
   timestamp: {
     fontSize: 10,
-    color: 'gray',
+    color: Colors.darkGray,
     alignSelf: 'flex-end',
-    marginTop: 5,
   },
   profilePicture: {
     width: 30,
     height: 30,
     borderRadius: 20,
     marginHorizontal: 5,
-  
+  },
+  statusIcon: {
+    position: 'absolute',
+    right: 0,
+    left:40,
+    bottom: 5,
   },
 });
 

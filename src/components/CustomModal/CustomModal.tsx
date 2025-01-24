@@ -71,7 +71,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
             {children}
             {onClose && (
               <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <TCText style={styles.closeButtonText}>X</TCText>
+                <TCText style={styles.closeButtonText}>x</TCText>
               </TouchableOpacity>
             )}
           </View>
