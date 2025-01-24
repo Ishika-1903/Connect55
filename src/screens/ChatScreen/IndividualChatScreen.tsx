@@ -119,9 +119,10 @@ const IndividualChatScreen = () => {
     } catch (error) {
       console.error('Error fetching older messages:', error);
     } finally {
+      console.log('test')
       setIsLoading(false);
     }
-  };
+  }
 
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
