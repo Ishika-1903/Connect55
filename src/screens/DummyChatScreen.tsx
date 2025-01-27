@@ -18,12 +18,14 @@ const CHAT_TOPIC = 'chat/6756cbb47b19daf3ef9e7048/messages';
 
 function DummyChatScreen() {
   const [currentUser, setCurrentUser] = useState<'user1' | 'user2'>('user1');
-  
-  const [chatMessages, setChatMessages] = useState<{
-    sender: string;
-    message: string;
-    timestamp: string;
-  }[]>([]);
+
+  const [chatMessages, setChatMessages] = useState<
+    {
+      sender: string;
+      message: string;
+      timestamp: string;
+    }[]
+  >([]);
   const [message, setMessage] = useState<string>('');
 
   const isConnected = useSelector((state: RootState) => state.mqtt.isConnected);
@@ -40,7 +42,7 @@ function DummyChatScreen() {
       if (topic === CHAT_TOPIC) {
         const parsedMessage = JSON.parse(payload.toString());
         console.log('Message received:', parsedMessage);
-        setChatMessages((prev) => [...prev, parsedMessage]);
+        setChatMessages(prev => [...prev, parsedMessage]);
       }
     };
 
@@ -102,7 +104,7 @@ function DummyChatScreen() {
         } else {
           console.log('Message published successfully:', chatMessage);
 
-          setChatMessages((prev) => [...prev, chatMessage]);
+          setChatMessages(prev => [...prev, chatMessage]);
           setMessage('');
         }
       },
@@ -116,19 +118,18 @@ function DummyChatScreen() {
     }
   };
 
-  // Calculate recipient name based on current user
   const recipientName =
     currentUser === 'user1' ? USERS.user2.name : USERS.user1.name;
 
   return (
     <View style={styles.container}>
-      {/* Chat Header */}
       <View style={styles.header}>
         <Text style={styles.headerText}>{recipientName}</Text>
       </View>
 
-      {/* Chat Messages */}
-      <ScrollView style={styles.chatContainer} contentContainerStyle={{paddingBottom: 10}}>
+      <ScrollView
+        style={styles.chatContainer}
+        contentContainerStyle={{paddingBottom: 10}}>
         {chatMessages.map((msg, index) => {
           const isCurrentUser =
             msg.sender ===

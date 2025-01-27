@@ -21,6 +21,12 @@ import {useSelector} from 'react-redux';
 import {baseURLPhoto} from '../../apis/apiConfig';
 import {getMqttClient} from '../../utils/mqttClient';
 
+type Participant = {
+  userId: string;
+  name: string;
+  profilePicture?: string;
+};
+
 const GroupChatScreen = () => {
   const navigation = useNavigation();
   const flatListRef = useRef<FlatList<any>>(null);
@@ -41,7 +47,9 @@ const GroupChatScreen = () => {
     size: number;
   } | null>(null);
 
-  const [participants, setParticipants] = useState([]);
+  // const [participants, setParticipants] = useState([]);
+
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
   const {chatId} = route.params;
   const CHAT_TOPIC = 'chat/6756cbb47b19daf3ef9e7048/messages';
@@ -58,9 +66,19 @@ const GroupChatScreen = () => {
       if (topic === CHAT_TOPIC) {
         const parsedMessage = JSON.parse(payload.toString());
         const sender = participants.find(
-          (participant: {userId: string}) => participant.userId === parsedMessage.senderId,
+          (participant: {userId: string}) =>
+            participant.userId === parsedMessage.senderId,
         );
-        
+
+        console.log('Sender:', sender);
+
+        const profilePicture = sender?.profilePicture
+          ? {uri: `${baseURLPhoto}${sender.profilePicture}`}
+          : Icons.dummyProfile;
+
+        console.log('Sender photo:', profilePicture);
+        console.log('Participants:', participants);
+        console.log('Parsed Sender ID:', parsedMessage.senderId);
         const newMessage = {
           id: parsedMessage.messageId || Date.now().toString(),
           message: parsedMessage.content || '',
@@ -78,6 +96,7 @@ const GroupChatScreen = () => {
                   : parsedMessage.media,
               }
             : null,
+          profilePicture,
         };
 
         setMessages(prevMessages => [...prevMessages, newMessage]);
@@ -176,7 +195,7 @@ const GroupChatScreen = () => {
 
             return {
               id: msg.messageId,
-              message: msg.content, 
+              message: msg.content,
               isSender: msg.senderId === userId,
               timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
                 hour: '2-digit',

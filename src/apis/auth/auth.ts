@@ -30,6 +30,7 @@ export const getOrganisationData = async () => {
     throw new Error(
       error.response?.data?.message || 'Failed to fetch organisation data.',
     );
+    //throw error
   }
 };
 

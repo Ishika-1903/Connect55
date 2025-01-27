@@ -9,17 +9,16 @@ import {
   Keyboard,
   Image,
   ActivityIndicator,
+  Text,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import ChatMessage from '../../components/chatComponent/ChatMessage';
 import {Colors} from '../../utils/constants/colors';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {useNavigation} from '@react-navigation/native';
 import {Strings} from '../../utils/constants/strings';
-import {
-  fetchChatByPagination,
-  getChatByChatId,
-  sendMessage,
-} from '../../apis/chat/chat';
+import {getChatByChatId, sendMessage} from '../../apis/chat/chat';
 import {useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../controller/store';
@@ -33,9 +32,8 @@ import {
 import {baseURLPhoto} from '../../apis/apiConfig';
 import {getMqttClient} from '../../utils/mqttClient';
 import {getUserData} from '../../apis/auth/auth';
-import Icons from '../../utils/constants/Icons';
 import CommonChatHeader from '../../components/chatComponent/ChatHeader';
-import { getInitials } from '../../utils/utils';
+import {getInitials} from '../../utils/utils';
 
 const IndividualChatScreen = () => {
   const navigation = useNavigation();
@@ -43,8 +41,9 @@ const IndividualChatScreen = () => {
   const route = useRoute();
   const userId = useSelector((state: RootState) => state.auth.userId);
   const {chatId, chatUserId: routeChatUserId} = route.params;
-
+  const [isFirstLoaded, setIsFirstLoaded] = useState(false);
   const chatUserId = useSelector((state: RootState) => state.auth.chatUserId);
+
   console.log('chatuserIdddd', chatUserId);
   const [userData, setUserData] = useState<{
     data: {
@@ -53,7 +52,6 @@ const IndividualChatScreen = () => {
     };
   } | null>(null);
   const [messages, setMessages] = useState([]);
-  const [participants, setParticipants] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -63,9 +61,9 @@ const IndividualChatScreen = () => {
     type: string;
     size: number;
   } | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+
   const [isLoading, setIsLoading] = useState(false);
-  const [lastMessageId, setLastMessageId] = useState<string | null>(null);
+  const [isFetchingOlderMessages, setIsFetchingOlderMessages] = useState(false);
 
   useEffect(() => {
     const idToUse = routeChatUserId || chatUserId;
@@ -85,44 +83,6 @@ const IndividualChatScreen = () => {
     }
   }, [routeChatUserId, chatUserId]);
 
-  const fetchOlderMessages = async () => {
-    if (!hasMore || isLoading) return;
-    setIsLoading(true);
-    try {
-      const olderMessages = await fetchChatByPagination(
-        chatId,
-        lastMessageId,
-        5,
-      ); // Fetch older messages
-      if (olderMessages.length > 0) {
-        const formattedMessages = olderMessages.map(msg => ({
-          id: msg.messageId,
-          message: msg.content,
-          isSender: msg.senderId === userId,
-          timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          media: msg.media
-            ? {
-                uri: msg.media.startsWith('/')
-                  ? `${baseURLPhoto}${msg.media}`
-                  : msg.media,
-              }
-            : null,
-        }));
-        setMessages(prevMessages => [...formattedMessages, ...prevMessages]);
-        setLastMessageId(olderMessages[olderMessages.length - 1].messageId); // Update last message ID
-      } else {
-        setHasMore(false); // No more messages to load
-      }
-    } catch (error) {
-      console.error('Error fetching older messages:', error);
-    } finally {
-      console.log('test')
-      setIsLoading(false);
-    }
-  }
 
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
@@ -204,6 +164,12 @@ const IndividualChatScreen = () => {
   };
 
   useEffect(() => {
+    if (messages.length > 0) {
+      console.log('First message ID:', messages[0].id);
+    }
+  }, [messages]);
+
+  useEffect(() => {
     console.log('hey in individualllll');
     const mqttClient = getMqttClient();
 
@@ -271,12 +237,16 @@ const IndividualChatScreen = () => {
     };
   }, [userId]);
 
+  
+
   useEffect(() => {
     const fetchChatDetails = async () => {
       try {
+   
         const response = await getChatByChatId(chatId);
         if (response?.data) {
           const {messages} = response.data;
+
           setMessages(
             messages.map(
               (msg: {
@@ -311,6 +281,55 @@ const IndividualChatScreen = () => {
 
     fetchChatDetails();
   }, [chatId, userId]);
+
+  const fetchOlderMessages = async () => {
+    if (!messages.length) return;
+    try {
+      setIsFetchingOlderMessages(true);
+      const response = await getChatByChatId(chatId, messages[0]?.id, 15);
+      if (response?.data) {
+        const {messages} = response.data;
+
+        const processedMessages = messages.map(
+          (msg: {
+            messageId: any;
+            content: any;
+            senderId: string | null;
+            timestamp: string | number | Date;
+            media: string;
+          }) => ({
+            id: msg.messageId,
+            message: msg.content,
+            isSender: msg.senderId === userId,
+            timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            media: msg.media
+              ? {
+                  uri: msg.media.startsWith('/')
+                    ? `${baseURLPhoto}${msg.media}`
+                    : msg.media,
+                }
+              : null,
+          }),
+        );
+
+        console.log(
+          'Fetched Messages (First 5):',
+          processedMessages.slice(0, 5),
+        );
+
+        setMessages(prevMessages => {
+          return [...processedMessages, ...prevMessages];
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching chat details in individual:', error);
+    } finally {
+      setIsFetchingOlderMessages(false);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!userId) {
@@ -357,6 +376,11 @@ const IndividualChatScreen = () => {
       console.error('Error sending message:', error);
     }
   };
+  useEffect(() => {
+    if (messages.length > 0) {
+      flatListRef.current?.scrollToEnd({animated: true});
+    }
+  }, [messages]);
 
   useEffect(() => {
     const showListener = Keyboard.addListener('keyboardDidShow', () =>
@@ -370,6 +394,13 @@ const IndividualChatScreen = () => {
       hideListener.remove();
     };
   }, []);
+
+  const handleFlatlist = () => {
+    if (isFirstLoaded) {
+      return;
+    }
+    fetchOlderMessages();
+  };
 
   return (
     <KeyboardAvoidingView
@@ -387,7 +418,7 @@ const IndividualChatScreen = () => {
             profilePictures={
               userData?.data.profilePicture
                 ? [{uri: `${baseURLPhoto}${userData?.data.profilePicture}`}]
-                : [] 
+                : []
             }
             profileInitials={
               userData?.data.profilePicture
@@ -399,10 +430,12 @@ const IndividualChatScreen = () => {
             groupName={null}
             onNamePress={() => navigation.navigate('Profile', {chatUserId})}
           />
+
           <FlatList
             ref={flatListRef}
             data={messages}
             keyExtractor={item => item.id}
+            onEndReached={handleFlatlist}
             renderItem={({item}) => (
               <ChatMessage
                 message={item.message}
@@ -417,13 +450,11 @@ const IndividualChatScreen = () => {
               flatListRef.current?.scrollToEnd({animated: true})
             }
             onLayout={() => flatListRef.current?.scrollToEnd({animated: true})}
-            // onEndReached={fetchOlderMessages}
-            // onEndReachedThreshold={0.5}
-            ListFooterComponent={
-              isLoading ? (
-                <ActivityIndicator size="small" color={Colors.darkBlue} />
-              ) : null
-            }
+            // ListHeaderComponent={
+            //   isFetchingOlderMessages ? (
+            //     <ActivityIndicator size="small" color="#0000ff" style={{ marginVertical: 10 }} />
+            //   ) : null
+            // }
             keyboardShouldPersistTaps="handled"
           />
           <View
@@ -486,6 +517,7 @@ const styles = StyleSheet.create({
   },
   messageList: {
     padding: 20,
+    marginHorizontal: 10,
   },
   inputWrapper: {
     flexDirection: 'column',

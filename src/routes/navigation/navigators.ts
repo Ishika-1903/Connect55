@@ -27,10 +27,6 @@ export type PublicNavigatorParamList = {
   DummyChat: undefined;
 };
 
-export type DrawerNavigatorParamList = {
-  Logout: undefined;
-};
-
 export type AppStackParamList = {
   //Private: {count: number};
   Private: undefined;

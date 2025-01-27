@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  FlatList,
   StyleSheet,
   ViewStyle,
   TextStyle,
@@ -71,14 +70,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     height: 60,
-    backgroundColor: Colors.darkBlue, 
+    backgroundColor: Colors.darkBlue,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
-    position: 'absolute', // Keep it absolute
-  bottom: 0,           // Align at the bottom
-  left: 0,
-  right: 0,
+    position: 'absolute', 
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   tabItemsContainer: {
     flexDirection: 'row',
@@ -90,9 +89,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   iconContainer: {
-    marginHorizontal:20,
-    paddingHorizontal:10,
-    paddingVertical:15,
+    marginHorizontal: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 15,
   },
   badge: {
     position: 'absolute',
@@ -111,6 +110,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
 
 export default CustomBottomTab;

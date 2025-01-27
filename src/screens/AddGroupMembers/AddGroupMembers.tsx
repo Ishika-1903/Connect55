@@ -22,6 +22,7 @@ import {useSelector} from 'react-redux';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {Strings} from '../../utils/constants/strings';
 import { getInitials } from '../../utils/utils';
+import { styles } from './AddGroupMembers.styles';
 
 type SearchResultItem = {
   userId: string;
@@ -154,7 +155,8 @@ const AddGroupMembers: React.FC = () => {
       />
       {selectedUsers.length > 0 && (
         <CustomButton
-          text="Done"
+          text={Strings.DONE.toUpperCase()}
+          textStyle={{color:Colors.white, fontSize:18, fontWeight:'bold'}}
           onPress={handleDoneSelecting}
           style={styles.doneButton}
         />
@@ -163,46 +165,5 @@ const AddGroupMembers: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  headerContainer: {
-    padding: 10,
-  },
-  inputFieldContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  inputField: {
-    width: '90%',
-    backgroundColor: Colors.gray,
-  },
-  leftContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  heading: {
-    color: Colors.darkBlue,
-    fontSize: 20,
-    letterSpacing: 1,
-    fontWeight: 'bold',
-  },
-  icon: {
-    color: Colors.darkBlue,
-  },
-  doneButton: {
-    width: '90%',
-    height: 50,
-    backgroundColor: Colors.white,
-    borderRadius: 30,
-    alignSelf: 'center',
-    bottom: 20,
-    position: 'absolute',
-  },
-});
 
 export default AddGroupMembers;

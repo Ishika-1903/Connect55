@@ -19,5 +19,7 @@ export const Strings = {
    ADMIN:'Admin',
    ADD_MEMBERS:'Add Members',
    RECENT_SEARCHES:'Recent Searches',
+   CONTACTS:'Contacts',
+   DONE:'Done',
 };
   

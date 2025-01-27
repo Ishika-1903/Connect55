@@ -22,7 +22,7 @@ const ChatItem: React.FC<ChatItemProps> = ({
   name,
   lastMessage,
   time,
-  unreadCount,
+  unreadCount = 2,
   onPress,
   onLongPress,
   isPinned,
@@ -50,26 +50,29 @@ const ChatItem: React.FC<ChatItemProps> = ({
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.name}>{name}</Text>
-          <Text style={styles.time}>{time}</Text>
         </View>
         <View style={styles.footer}>
-  <Text style={styles.lastMessage}>{lastMessage}</Text>
-  <View style={styles.footerRight}>
-    {isPinned && <MaterialIcons name="push-pin" size={16} color={Colors.darkBlue} />}
-    {unreadCount > 0 && (
-      <View style={styles.unreadBadge}>
-        <Text style={styles.unreadCount}>{unreadCount}</Text>
+          <Text style={styles.lastMessage}>{lastMessage}</Text>
+        </View>
       </View>
-    )}
-  </View>
-</View>
-
+      <View style={styles.rightContent}>
+        <Text style={styles.time}>{time}</Text>
+        <View style={styles.rightIcons}>
+          {isPinned && (
+            <MaterialIcons
+              name="push-pin"
+              size={20}
+              color={Colors.darkBlue}
+              style={styles.pinIcon}
+            />
+          )}
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadCount}>{unreadCount}</Text>
+            </View>
+          )}
+        </View>
       </View>
-      {rightContent ? (
-        <View style={styles.rightContent}>{rightContent}</View>
-      ) : (
-        isPinned && <Text style={styles.pinIcon}>📌</Text>
-      )}
     </TouchableOpacity>
   );
 };
@@ -117,6 +120,8 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 12,
     color: 'gray',
+    marginBottom: 5,
+    textAlign: 'right',
   },
   footer: {
     flexDirection: 'row',
@@ -131,7 +136,7 @@ const styles = StyleSheet.create({
   },
   unreadBadge: {
     backgroundColor: Colors.darkBlue,
-    borderRadius: 12,
+    borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
@@ -141,18 +146,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   pinIcon: {
-    fontSize: 18,
-    color: Colors.darkBlue,
-    marginLeft: 10,
+    marginLeft: 2,
+    marginTop: 2,
+    right: 2,
   },
   rightContent: {
-    marginLeft: 10,
+    alignItems: 'flex-end',
     justifyContent: 'center',
-    alignItems: 'center',
   },
   footerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  rightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
   },
 });
 

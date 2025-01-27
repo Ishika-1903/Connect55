@@ -75,40 +75,41 @@ export const getChatByUserId = async (userId: string) => {
   }
 };
 
-export const getChatByChatId = async (chatId: string) => {
-  try {
-    const response = await apiClient.get(`/chat-data/${chatId}`);
-    console.log('getChatByChatId', JSON.stringify(response));
-    return response.data;
-  } catch (error: any) {
-    console.log('Error creating chat:', error);
-    throw new Error(error.response?.data?.error || 'An error occurred');
-  }
-};
-
-// export const getChatByChatId = async (
-//   chatId: string, 
-//   lastMessageId: string, 
-//   limit: number
-// ) => {
+// export const getChatByChatId = async (chatId: string) => {
 //   try {
-//     const response = await apiClient.get(`/chat-data/${chatId}`, {
-//       params: {
-//         lastMessageId,
-//         limit,
-//       },
-//     });
+//     const response = await apiClient.get(`/chat-data/${chatId}`);
 //     console.log('getChatByChatId', JSON.stringify(response));
 //     return response.data;
 //   } catch (error: any) {
-//     console.log('Error fetching chat:', error);
+//     console.log('Error creating chat:', error);
 //     throw new Error(error.response?.data?.error || 'An error occurred');
 //   }
 // };
 
+export const getChatByChatId = async (
+  chatId: string,
+  lastMessageId?: string,
+  limit?: number,
+) => {
+  console.log('lasttt',lastMessageId )
+  console.log('limittt', limit)
+  try {
+    const response = await apiClient.get(`/chat-data/${chatId}`, {
+      params: {
+        lastMessageId,
+        limit,
+      },
+    });
+    // console.log('getChatByChatId', JSON.stringify(response));
+    return response.data;
+  } catch (error: any) {
+    console.log('Error fetching chat:', error);
+    throw new Error(error.response?.data?.error || 'An error occurred');
+  }
+};
+
 export const sendMessage = async (
   chatId: string,
-  // senderId: string,
   userId: string,
   content: string,
   media: {uri: string; name: string; type: string; size: number} | null,
@@ -116,7 +117,6 @@ export const sendMessage = async (
   try {
     const formData = new FormData();
     formData.append('chatId', chatId);
-    // formData.append('senderId', senderId);
     formData.append('senderId', userId);
     formData.append('content', content);
     if (media && media.uri) {
@@ -184,31 +184,6 @@ export const updateGroup = async (
   } catch (error: any) {
     console.error('Error updating groupsss:', error);
     throw new Error(error.response?.data?.error || 'An error occurred');
-  }
-};
-
-export const fetchChatByPagination = async (
-  chatId: string,
-  lastMessageId: string | null,
-  limit: number,
-) => {
-  try {
-    const response = await apiClient.get('/chat-data', {
-      params: {
-        chatId,
-        lastMessageId,
-        limit,
-      },
-    });
-
-    if (response.data.success) {
-      return response.data.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch chat data');
-    }
-  } catch (error: any) {
-    console.error('Error fetching chat data:', error.message || error);
-    throw error;
   }
 };
 
