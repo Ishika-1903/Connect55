@@ -348,10 +348,12 @@ const ChatList: React.FC = () => {
                         dispatch(setChatUserId(item.otherParticipant.userId));
                       }
                       console.log('Last Message ID:', item.lastMessageId);
+                      console.log('chatIddddd in chatlistt', item._id);
                       navigation.navigate('IndividualChatScreen', {
                         chatId: item._id,
                         lastMessageId: item.lastMessageId,
                       });
+                      
                     }}
                     onLongPress={() => handleLongPress(item)}
                     // rightContent={

@@ -44,6 +44,8 @@ const IndividualChatScreen = () => {
   const [isFirstLoaded, setIsFirstLoaded] = useState(false);
   const chatUserId = useSelector((state: RootState) => state.auth.chatUserId);
 
+  console.log('chatIddddd in indiviualdddd', chatId);
+
   console.log('chatuserIdddd', chatUserId);
   const [userData, setUserData] = useState<{
     data: {
@@ -83,10 +85,9 @@ const IndividualChatScreen = () => {
     }
   }, [routeChatUserId, chatUserId]);
 
-
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
-  const CHAT_TOPIC ='chat/+/messages'; // 'chat/6756cbb47b19daf3ef9e7048/messages';
+  const CHAT_TOPIC = 'chat/+/messages'; // 'chat/6756cbb47b19daf3ef9e7048/messages';
 
   const onBackPress = () => {
     navigation.goBack();
@@ -165,7 +166,7 @@ const IndividualChatScreen = () => {
 
   useEffect(() => {
     if (messages.length > 0) {
-      console.log('First message ID:', messages[0].id);
+      console.log('First message ID:', messages[0]?.id);
     }
   }, [messages]);
 
@@ -179,37 +180,36 @@ const IndividualChatScreen = () => {
     }
 
     const handleMessage = (topic: string, payload: Buffer) => {
-      console.log('handle message test print');
-      if (topic.startsWith("chat/") && topic.endsWith('/messages')) {
+      if (topic.startsWith('chat/') && topic.endsWith('/messages')) {
         const parsedMessage = JSON.parse(payload.toString());
-        
+
         // Ignore messages originating from the server
         if (parsedMessage.origin === 'server') return;
-        
+
         console.log('Message received:', parsedMessage);
-
-        const newMessage = {
-          id: parsedMessage.messageId || Date.now().toString(),
-          message: parsedMessage.content || '',
-          isSender: parsedMessage.senderId === userId,
-          timestamp: new Date(
-            parsedMessage.timestamp || Date.now(),
-          ).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          media: parsedMessage.media
-            ? {
-                uri: parsedMessage.media.startsWith('/')
-                  ? `${baseURLPhoto}${parsedMessage.media}`
-                  : parsedMessage.media,
-              }
-            : null,
-        };
-
-        setMessages(prevMessages => {
-          return [...prevMessages, newMessage];
-        });
+        if (parsedMessage.chatId === chatId) {
+          const newMessage = {
+            chatId: parsedMessage.chatId || Date.now().toString(),
+            message: parsedMessage.content || '',
+            isSender: parsedMessage.senderId === userId,
+            timestamp: new Date(
+              parsedMessage.timestamp || Date.now(),
+            ).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            media: parsedMessage.media
+              ? {
+                  uri: parsedMessage.media.startsWith('/')
+                    ? `${baseURLPhoto}${parsedMessage.media}`
+                    : parsedMessage.media,
+                }
+              : null,
+          };
+          setMessages(prevMessages => {
+            return [...prevMessages, newMessage];
+          });
+        }
 
         flatListRef.current?.scrollToEnd({animated: true});
       }
@@ -237,12 +237,9 @@ const IndividualChatScreen = () => {
     };
   }, [userId]);
 
-  
-
   useEffect(() => {
     const fetchChatDetails = async () => {
       try {
-   
         const response = await getChatByChatId(chatId);
         if (response?.data) {
           const {messages} = response.data;
@@ -336,7 +333,7 @@ const IndividualChatScreen = () => {
       console.error('Error: userId is null or undefined');
       return;
     }
-
+    console.log('outside function');
     if (inputText.trim() === '' && !photo) return;
     try {
       // const response = await sendMessage(chatId, userId, inputText, photo);
@@ -352,23 +349,28 @@ const IndividualChatScreen = () => {
       //   media: photo ? {...photo} : null,
       // };
       // console.log('response in individual', response);
-
+      console.log('inside function');
       const mqttClient = getMqttClient();
       if (mqttClient) {
-        console.log('mqtt')
+        // console.log('mqtt')
 
         const messagePayload = JSON.stringify({
-          messageId: `${chatId}_${Date.now()}`,
+          // messageId: `${chatId}_${Date.now()}`,
+          chatId: chatId,
           content: inputText,
           senderId: userId,
           timestamp: new Date().toISOString(),
           media: photo || null,
-          origin:'client'});
-        
-        console.log("messagePayload:",messagePayload);
+          origin: 'client',
+        });
+
+        console.log(
+          'messagePayload in indivualaddddddd screeeeeeennnenenenen:',
+          messagePayload,
+        );
         mqttClient.publish(`chat/${chatId}/messages`, messagePayload);
       }
-      console.log('chatId in handlesend', chatId)
+      // console.log('chatId in handlesend', chatId)
       setInputText('');
       setPhoto(null);
       flatListRef.current?.scrollToEnd({animated: true});
@@ -434,7 +436,8 @@ const IndividualChatScreen = () => {
           <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={item => item.id}
+            // keyExtractor={item => item.id}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
             onEndReached={handleFlatlist}
             renderItem={({item}) => (
               <ChatMessage
