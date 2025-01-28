@@ -17,11 +17,12 @@ import {setToken, setUserId} from '../../controller/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 
+import TokenService from '../../utils/database/Token/TokenService';
+
 type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
 
 const LoginScreen: React.FC = () => {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -74,7 +75,7 @@ const LoginScreen: React.FC = () => {
         setPasswordError('Password is required');
         return;
       }
-
+      console.log('11111');
       const response = await login(email, password);
       console.log('Login Successful:', response.data);
       const userId = response.data.data.userId;
@@ -84,6 +85,9 @@ const LoginScreen: React.FC = () => {
 
       await AsyncStorage.setItem('userToken', token);
       await AsyncStorage.setItem('userId', userId.toString());
+
+      const saveResult = TokenService.addUser(token);
+      console.log('Realm Save Result:', saveResult.message);
 
       const storedUserId = await AsyncStorage.getItem('userId');
       console.log('Stored UserId:', storedUserId);
@@ -169,8 +173,8 @@ const LoginScreen: React.FC = () => {
             }}
             containerStyle={{backgroundColor: '#EFEFEF'}}
             value={password}
-            ref={passwordInputRef} 
-            returnKeyType="done" 
+            ref={passwordInputRef}
+            returnKeyType="done"
             onChangeText={text => setPassword(text)}
           />
           {passwordError ? (
