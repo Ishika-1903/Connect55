@@ -5,6 +5,7 @@ class TokenModel extends Realm.Object {
     name: 'Token',
     properties: {
       token: 'string',
+      FCMToken:'string[]',
     },
   };
 }

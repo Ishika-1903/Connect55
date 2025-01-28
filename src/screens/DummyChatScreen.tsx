@@ -41,7 +41,7 @@ function DummyChatScreen() {
     const handleMessage = (topic: string, payload: Buffer) => {
       if (topic === CHAT_TOPIC) {
         const parsedMessage = JSON.parse(payload.toString());
-        console.log('Message received:', parsedMessage);
+       
         setChatMessages(prev => [...prev, parsedMessage]);
       }
     };
@@ -51,7 +51,7 @@ function DummyChatScreen() {
       if (err) {
         console.error('Subscription error:', err);
       } else {
-        console.log(`Subscribed to topic: ${CHAT_TOPIC}`);
+      
       }
     });
 
@@ -60,7 +60,7 @@ function DummyChatScreen() {
         if (err) {
           console.error('Unsubscribe error:', err);
         } else {
-          console.log(`Unsubscribed from topic: ${CHAT_TOPIC}`);
+        
         }
       });
       mqttClient.removeListener('message', handleMessage);
@@ -102,7 +102,7 @@ function DummyChatScreen() {
         if (err) {
           console.error('Publish error:', err);
         } else {
-          console.log('Message published successfully:', chatMessage);
+         
 
           setChatMessages(prev => [...prev, chatMessage]);
           setMessage('');
@@ -112,7 +112,7 @@ function DummyChatScreen() {
 
     try {
       const response = await sendMessage(chatId, senderId, content, media);
-      console.log('Message sent successfully via API:', response.data);
+    
     } catch (error: any) {
       console.error('Error during API call:', error);
     }

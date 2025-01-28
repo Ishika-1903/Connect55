@@ -19,7 +19,6 @@ const EmailScreen: React.FC = () => {
     if (validateEmail(email)) {
       setError('');
       navigation.navigate('OTP');
-      console.log('Email is valid. Proceed to next screen!', email);
     } else {
       setError('* Please enter a valid work email.');
     }

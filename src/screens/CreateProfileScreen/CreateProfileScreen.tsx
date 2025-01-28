@@ -75,18 +75,13 @@ const CreateProfileScreen = () => {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const userId = useSelector((state: RootState) => state.auth.userId);
-  console.log('userrrrId in profile', userId);
 
   const deviceTokens = useSelector((state: RootState) => state.auth.FCMToken);
-
-  console.log('FCMToken in profile screen', JSON.stringify(deviceTokens));
 
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     const fetchUserData = async () => {
-      console.log('Fetching user data on first load...');
-
       if (!userId) {
         console.error('User ID is missing in Profile Screen');
         return;
@@ -97,7 +92,6 @@ const CreateProfileScreen = () => {
         const response = await getUserData(userId);
 
         if (response?.data?.name) {
-          console.log('Returning user, fetching full data...');
           setName(response.data.name || '');
           setBio(response.data.bio || '');
           setUserEmail(response.data.email || '');
@@ -253,7 +247,6 @@ const CreateProfileScreen = () => {
     }
 
     setLoading(true);
-    console.log('1');
     try {
       console.log('2');
       const updatedProfile = await updateUserProfile(
@@ -268,9 +261,9 @@ const CreateProfileScreen = () => {
         deviceTokens || [],
       );
       console.log('userId after api,', userId);
-      console.log('3');
+
       console.log('Profile updated successfully:', updatedProfile);
-      console.log('4');
+
       navigation.navigate('Private', {screen: 'Home'});
     } catch (error) {
       console.error(error);
@@ -498,7 +491,6 @@ const CreateProfileScreen = () => {
                 placeholder="Enter your work location"
                 value={location}
                 onChangeText={text => {
-                  console.log('Work Location changed:', text);
                   setLocation(text);
                 }}
                 placeholderTextStyle={styles.placeholderColor}

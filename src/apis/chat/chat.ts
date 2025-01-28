@@ -44,7 +44,6 @@ export const createChat = async (
     //     name: groupIcon.name || 'profile_picture.jpg',
     //   });
     // }
-    console.log('formDataaaa', formData.getParts());
     const response = await apiClient.post(`/chat/create-chat`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -64,10 +63,7 @@ export const createChat = async (
 
 export const getChatByUserId = async (userId: string) => {
   try {
-    console.log('heyyyy', userId);
     const response = await apiClient.get(`/chat/${userId}`);
-
-    // console.log('getChatByUserId', JSON.stringify(response));
     return response.data;
   } catch (error: any) {
     console.log('Error creating chat:', error);
@@ -91,8 +87,6 @@ export const getChatByChatId = async (
   lastMessageId?: string,
   limit?: number,
 ) => {
-  console.log('lasttt',lastMessageId )
-  console.log('limittt', limit)
   try {
     const response = await apiClient.get(`/chat-data/${chatId}`, {
       params: {
@@ -100,10 +94,8 @@ export const getChatByChatId = async (
         limit,
       },
     });
-    // console.log('getChatByChatId', JSON.stringify(response));
     return response.data;
   } catch (error: any) {
-    console.log('Error fetching chat:', error);
     throw new Error(error.response?.data?.error || 'An error occurred');
   }
 };
@@ -156,7 +148,6 @@ export const updateGroup = async (
   groupAdminIds: string[],
 ) => {
   try {
-    console.log('formdataaa');
     const formData = new FormData();
     formData.append('chatId', chatId);
     formData.append('userId', userId);
@@ -165,21 +156,17 @@ export const updateGroup = async (
     formData.append('removeMembers', JSON.stringify(removeMembers));
     formData.append('groupAdminIds', JSON.stringify(groupAdminIds));
     if (groupIcon && groupIcon.uri) {
-      console.log('Group Icon URI:', groupIcon.uri);
       formData.append('groupIcon', {
         uri: groupIcon.uri,
         type: groupIcon.type || 'image/jpg',
         name: groupIcon.name || 'profile_picture.jpg',
       });
     }
-    console.log('afterr');
     const response = await apiClient.patch('/chat/group/update', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-
-    console.log('updateGroup response', JSON.stringify(response.data));
     return response.data;
   } catch (error: any) {
     console.error('Error updating groupsss:', error);

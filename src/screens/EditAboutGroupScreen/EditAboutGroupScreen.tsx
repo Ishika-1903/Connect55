@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
   View,
-  StyleSheet,
   FlatList,
   TouchableOpacity,
   TextInput,
@@ -30,7 +29,7 @@ import {updateGroup} from '../../apis/chat/chat';
 import {useSelector} from 'react-redux';
 import CustomButton from '../../components/buttons/CustomButton';
 import Toast from 'react-native-toast-message';
-import { styles } from './EditAboutGroupScreen.styles';
+import {styles} from './EditAboutGroupScreen.styles';
 
 type Participant = {
   name: string;
@@ -79,7 +78,6 @@ const EditAboutGroupScreen: React.FC = () => {
             response.data;
           if (groupAdmin.includes(userId)) {
             setIsAdmin(true);
-            console.log('Current user is an admin');
           } else {
             setIsAdmin(false);
           }
@@ -430,8 +428,7 @@ const EditAboutGroupScreen: React.FC = () => {
                 {!item.isAdmin && (
                   <TCText
                     style={styles.minusSymbol}
-                    onPress={() => handleRemoveMember(item.userId)} // Handle member removal
-                  >
+                    onPress={() => handleRemoveMember(item.userId)}>
                     -
                   </TCText>
                 )}

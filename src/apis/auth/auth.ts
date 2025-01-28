@@ -12,44 +12,26 @@ export const registerUser = async (
       password,
       deviceTokens,
     });
-    console.log('responseeeeee', response);
     return response.data;
   } catch (error: any) {
     throw new Error(error);
   }
 };
 
-// export const registerUser = async (email: string, password: string) => {
-//   try {
-//     const response = await apiClient.post('/users/register', {email, password});
-//     console.log('responseeeeee', response);
-//     return response.data;
-//   } catch (error: any) {
-//     throw new Error(error);
-//   }
-// };
-
 export const getOrganisationData = async () => {
   try {
     const response = await apiClient.get('/organisation-data');
-    console.log('Organisation data:', JSON.stringify(response));
     return response.data;
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || 'Failed to fetch organisation data.',
     );
-    //throw error
   }
 };
 
 export const login = async (email: string, password: string) => {
   try {
-    console.log('email', email);
-    console.log('pass', password);
-    console.log('apiClient in login', apiClient.getUri());
     const response = await apiClient.post('/users/login', {email, password});
-
-    console.log('login response', response.data);
     return response;
   } catch (error: any) {
     console.error('error of login', error);
@@ -60,7 +42,6 @@ export const login = async (email: string, password: string) => {
 export const getUserData = async (id: string) => {
   try {
     const response = await apiClient.get(`/users/user-data/${id}`);
-    console.log('User data:', JSON.stringify(response));
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message);
@@ -84,7 +65,6 @@ export const updateUserProfile = async (
   deviceTokens: string[] | null,
 ): Promise<UserProfile> => {
   try {
-    console.log('beforeeeeee');
     const formData = new FormData();
     formData.append('name', name);
     formData.append('bio', bio);
@@ -100,9 +80,6 @@ export const updateUserProfile = async (
     formData.append('workLocation', workLocation);
     formData.append('designation', designation);
     formData.append('deviceTokens', JSON.stringify(deviceTokens));
-
-    console.log('formDataaaa', formData);
-    console.log('apiclient in profile', apiClient.getUri());
     const response = await apiClient.patch(
       `/users/update/${userId}`,
       formData,
@@ -113,31 +90,22 @@ export const updateUserProfile = async (
       },
     );
 
-    console.log('Response:', response.data);
-
     const updatedProfile: UserProfile = response.data.data;
-    console.log('Profile updated successfully:', updatedProfile);
-    console.log('profilePictureeeeee', profilePicture);
 
     return updatedProfile;
   } catch (error: any) {
-    console.log('error in profile api', error);
     throw new Error(error);
   }
 };
 
 export const searchUsers = async (query: string) => {
   try {
-    console.log('Search query:', query);
-
     const response = await apiClient.get(`/users/search-users`, {
       params: {query},
     });
 
-    console.log('Search users response:', response);
     return response;
   } catch (error: any) {
-    console.log('Error in search users:', error);
     throw new Error(error.response?.data?.message || 'Failed to search users');
   }
 };

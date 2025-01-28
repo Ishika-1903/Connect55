@@ -58,8 +58,6 @@ const ChatList: React.FC = () => {
           pinned: !isPinned,
         });
         if (response?.success) {
-          console.log(isPinned ? 'Chat unpinned!' : 'Chat pinned!');
-
           setChatData(prevChatData =>
             prevChatData.map(chat =>
               chat._id === selectedChat._id
@@ -82,17 +80,14 @@ const ChatList: React.FC = () => {
       const handleGetChatByUserId = async () => {
         try {
           let storedUserId = await AsyncStorage.getItem('userId');
-          console.log('Stored User ID:', storedUserId);
 
           if (!storedUserId) {
             storedUserId = userId;
-            console.log('Fallback to Passed User ID:', userId);
           }
 
           if (storedUserId) {
             setLoading(true);
             const response = await getChatByUserId(storedUserId);
-            console.log('API Response:', response);
 
             if (response?.success) {
               const chats = response.data.filter(
@@ -153,11 +148,12 @@ const ChatList: React.FC = () => {
 
   const filteredData = useMemo(() => {
     console.log('Active Tab:', activeTab);
+    console.log('--------->', activeTab);
     if (activeTab === 'Pinned') {
       return chatData.filter(chat => chat.pinned);
     }
     if (activeTab === 'DirectMessages') {
-      return chatData.filter(
+      const directMessages = chatData.filter(
         chat =>
           chat.type === 'one-to-one' &&
           chat.messages &&
@@ -166,6 +162,8 @@ const ChatList: React.FC = () => {
             ?.toLowerCase()
             .includes(searchQuery.toLowerCase()),
       );
+      console.log('Direct Messages:', directMessages);
+      return directMessages;
     }
 
     if (activeTab === 'Groups') {
@@ -571,6 +569,7 @@ const styles = StyleSheet.create({
   },
   chatListContainer: {
     flex: 1,
+    paddingBottom: 50,
   },
   pinContainer: {
     marginTop: 2,

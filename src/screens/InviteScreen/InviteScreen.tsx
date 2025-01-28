@@ -19,7 +19,7 @@ import {Colors} from '../../utils/constants/colors';
 import {Strings} from '../../utils/constants/strings';
 import Icons from '../../utils/constants/Icons';
 import Contacts from 'react-native-contacts';
-import { styles } from './InviteScreen.styles';
+import {styles} from './InviteScreen.styles';
 
 const InviteScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -36,10 +36,8 @@ const InviteScreen: React.FC = () => {
       );
 
       if (isPermissionGranted) {
-        console.log('Permission already granted');
         fetchContacts();
       } else {
-        console.log('Permission not granted, requesting now...');
         const result = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
           {
@@ -78,7 +76,6 @@ const InviteScreen: React.FC = () => {
         }));
 
       setContacts(filteredContacts);
-      console.log('Filtered Contacts:', filteredContacts);
     } catch (error) {
       console.error('Error fetching contacts:', error);
     }
@@ -151,6 +148,4 @@ const InviteScreen: React.FC = () => {
   );
 };
 
-
 export default InviteScreen;
-

@@ -12,12 +12,13 @@ import {Strings} from '../../utils/constants/strings';
 import CustomButton from '../../components/buttons/CustomButton';
 import {validateEmail} from '../../utils/utils';
 import {login} from '../../apis/auth/auth';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {setToken, setUserId} from '../../controller/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 
 import TokenService from '../../utils/database/Token/TokenService';
+import {RootState} from '../../controller/store';
 
 type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
 
@@ -34,13 +35,15 @@ const LoginScreen: React.FC = () => {
   const navigation = useNavigation<PublicNavigationProps>();
   const passwordInputRef = useRef<TextInput>(null);
 
+  const FCMToken = useSelector((state: RootState) => state.auth.FCMToken);
+
   useEffect(() => {
     const fetchFcmToken = async () => {
       try {
         const token = await AsyncStorage.getItem('fcmToken');
         setFcmToken(token);
       } catch (error) {
-        console.log('Error fetching FCM token from AsyncStorage:', error);
+        throw error;
       }
     };
 
@@ -86,7 +89,7 @@ const LoginScreen: React.FC = () => {
       await AsyncStorage.setItem('userToken', token);
       await AsyncStorage.setItem('userId', userId.toString());
 
-      const saveResult = TokenService.addUser(token);
+      const saveResult = TokenService.addToken(token, FCMToken);
       console.log('Realm Save Result:', saveResult.message);
 
       const storedUserId = await AsyncStorage.getItem('userId');

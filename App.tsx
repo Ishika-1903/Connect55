@@ -199,8 +199,6 @@ function App(): React.JSX.Element {
         remoteMessage.data?.body ||
         'Default Body';
 
-      console.log('Remote message:', remoteMessage);
-
       await notifee.displayNotification({
         title,
         body,
@@ -212,7 +210,6 @@ function App(): React.JSX.Element {
           },
         },
       });
-      console.log('Notification displayed');
     } catch (error) {
       console.error('Error displaying notification:', error);
     }

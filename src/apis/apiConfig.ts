@@ -36,7 +36,7 @@ const checkSavedToken = async () => {
 };
 
 const getToken = () => {
-  const state = store.getState(); //use async here instead of store
+  const state = store.getState();
   console.log('state.auth.token', state.auth.token);
   return state.auth.token;
 };
@@ -47,7 +47,6 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
-    console.log('tokenapiiii', token);
     return config;
   },
   error => {
@@ -58,7 +57,6 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
   response => {
-    console.log('Response:', response);
     return response;
   },
   async error => {

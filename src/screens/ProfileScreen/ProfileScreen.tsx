@@ -31,6 +31,8 @@ import {styles} from './ProfileScreen.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getInitials} from '../../utils/utils';
 
+import TokenService from '../../utils/database/Token/TokenService';
+
 type ProfileScreenNavigationProp =
   StackNavigationProp<PrivateNavigatorParamList>;
 
@@ -107,6 +109,16 @@ const ProfilePage: React.FC = () => {
         const response = await getUserData(idToFetch);
         if (response.success) {
           setUserData(response.data);
+          console.log('response in profileeeee', JSON.stringify(response.data));
+          const saveResult = TokenService.addUser(
+            response.data.name,
+            response.data.bio,
+            response.data.designation,
+            response.data.department,
+            response.data.workLocation,
+            response.data.skills,
+          );
+          console.log('Realm Save Profile Result:', saveResult.message);
         } else {
           console.error('Failed to fetch user data:', response.message);
         }
