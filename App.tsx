@@ -151,6 +151,7 @@ import {Alert, PermissionsAndroid} from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee from '@notifee/react-native';
+import {setFCMToken} from './src/controller/authSlice';
 
 const MQTT_BROKER_URL = 'ws://broker.emqx.io:8083/mqtt';
 
@@ -227,6 +228,7 @@ function App(): React.JSX.Element {
     try {
       const token = await messaging().getToken();
       console.log('My FCM Token:', token);
+      dispatch(setFCMToken(token));
       if (token) {
         await AsyncStorage.setItem('fcmToken', token);
         console.log('FCM Token stored in AsyncStorage');

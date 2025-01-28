@@ -119,13 +119,6 @@ const LoginScreen: React.FC = () => {
     <View style={styles.screenContainer}>
       <View style={styles.container}>
         <Image source={Icons.logo} style={styles.heading} />
-        {/* {fcmToken && (
-          <View style={{marginTop: 20}}>
-            <Text style={{color: Colors.darkBlue, textAlign: 'center'}}>
-              FCM Token: {fcmToken}
-            </Text>
-          </View>
-        )} */}
 
         <View style={styles.inputContainer}>
           <CustomInputField
@@ -169,8 +162,8 @@ const LoginScreen: React.FC = () => {
             }}
             containerStyle={{backgroundColor: '#EFEFEF'}}
             value={password}
-            ref={passwordInputRef} 
-            returnKeyType="done" 
+            ref={passwordInputRef}
+            returnKeyType="done"
             onChangeText={text => setPassword(text)}
           />
           {passwordError ? (
