@@ -77,6 +77,10 @@ const CreateProfileScreen = () => {
   const userId = useSelector((state: RootState) => state.auth.userId);
   console.log('userrrrId in profile', userId);
 
+  const deviceTokens = useSelector((state: RootState) => state.auth.FCMToken);
+
+  console.log('FCMToken in profile screen', JSON.stringify(deviceTokens));
+
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
@@ -241,7 +245,8 @@ const CreateProfileScreen = () => {
       !selectedDepartment ||
       !selectedSkills.length ||
       !selectedDesignation ||
-      !profilePicture
+      !profilePicture ||
+      !deviceTokens
     ) {
       console.error('Please fill in all the required fields!');
       setLoading(true);
@@ -260,6 +265,7 @@ const CreateProfileScreen = () => {
         profilePicture,
         location,
         selectedDesignation,
+        deviceTokens || [],
       );
       console.log('userId after api,', userId);
       console.log('3');

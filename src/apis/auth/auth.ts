@@ -1,25 +1,33 @@
 import {apiClient} from '../apiConfig';
 import {UserProfile} from './types';
 
-// export const registerUser = async (email: string, password: string,  deviceTokens: string[]) => {
-//   try {
-//     const response = await apiClient.post('/users/register', {email, password, deviceTokens});
-//     console.log('responseeeeee', response);
-//     return response.data;
-//   } catch (error: any) {
-//     throw new Error(error);
-//   }
-// };
-
-export const registerUser = async (email: string, password: string) => {
+export const registerUser = async (
+  email: string,
+  password: string,
+  deviceTokens: string[],
+) => {
   try {
-    const response = await apiClient.post('/users/register', {email, password});
+    const response = await apiClient.post('/users/register', {
+      email,
+      password,
+      deviceTokens,
+    });
     console.log('responseeeeee', response);
     return response.data;
   } catch (error: any) {
     throw new Error(error);
   }
 };
+
+// export const registerUser = async (email: string, password: string) => {
+//   try {
+//     const response = await apiClient.post('/users/register', {email, password});
+//     console.log('responseeeeee', response);
+//     return response.data;
+//   } catch (error: any) {
+//     throw new Error(error);
+//   }
+// };
 
 export const getOrganisationData = async () => {
   try {
@@ -41,11 +49,11 @@ export const login = async (email: string, password: string) => {
     console.log('apiClient in login', apiClient.getUri());
     const response = await apiClient.post('/users/login', {email, password});
 
-    console.log('login response', response);
+    console.log('login response', response.data);
     return response;
   } catch (error: any) {
-    console.log('error of login', error);
-    throw new Error(error.response?.data?.message);
+    console.error('error of login', error);
+    throw error;
   }
 };
 
@@ -73,23 +81,27 @@ export const updateUserProfile = async (
   } | null,
   workLocation: string | null,
   designation: string | null,
+  deviceTokens: string[] | null,
 ): Promise<UserProfile> => {
   try {
+    console.log('beforeeeeee');
     const formData = new FormData();
     formData.append('name', name);
     formData.append('bio', bio);
     formData.append('department', department);
     formData.append('skills', JSON.stringify(skills));
-    if (profilePicture && profilePicture.uri) {
-      formData.append('profilePicture', {
-        uri: profilePicture.uri,
-        type: profilePicture.type || 'image/jpg',
-        name: profilePicture.name || 'profile_picture.jpg',
-      });
-    }
+    // if (profilePicture && profilePicture.uri) {
+    //   formData.append('profilePicture', {
+    //     uri: profilePicture.uri,
+    //     type: profilePicture.type || 'image/jpg',
+    //     name: profilePicture.name || 'profile_picture.jpg',
+    //   });
+    // }
     formData.append('workLocation', workLocation);
     formData.append('designation', designation);
-    console.log('formDataaaa', formData.getParts());
+    formData.append('deviceTokens', JSON.stringify(deviceTokens));
+
+    console.log('formDataaaa', formData);
     console.log('apiclient in profile', apiClient.getUri());
     const response = await apiClient.patch(
       `/users/update/${userId}`,
@@ -109,6 +121,7 @@ export const updateUserProfile = async (
 
     return updatedProfile;
   } catch (error: any) {
+    console.log('error in profile api', error);
     throw new Error(error);
   }
 };

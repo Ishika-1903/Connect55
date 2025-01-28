@@ -1,27 +1,37 @@
-import React, { useState, useRef } from 'react';
-import { View, Image, ActivityIndicator, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { TCText } from '../../components/text/CustomText';
+import React, {useState, useRef} from 'react';
+import {
+  View,
+  Image,
+  ActivityIndicator,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+} from 'react-native';
+import {TCText} from '../../components/text/CustomText';
 import Icons from '../../utils/constants/Icons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AppStackParamList } from '../../routes/navigation/navigators';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {AppStackParamList} from '../../routes/navigation/navigators';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import CustomButton from '../../components/buttons/CustomButton';
-import { validateEmail } from '../../utils/utils';
-import { styles } from './CreateAccountScreen.styles';
-import { Colors } from '../../utils/constants/colors';
-import { useDispatch } from 'react-redux';
+import {validateEmail} from '../../utils/utils';
+import {styles} from './CreateAccountScreen.styles';
+import {Colors} from '../../utils/constants/colors';
+import {useDispatch, useSelector} from 'react-redux';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { registerUser } from '../../apis/auth/auth';
-import { setToken, setUserId } from '../../controller/authSlice';
-import { saveToken } from '../../apis/apiConfig';
+import {registerUser} from '../../apis/auth/auth';
+import {setToken, setUserId} from '../../controller/authSlice';
+import {saveToken} from '../../apis/apiConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {RootState} from '../../controller/store';
 
 type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
 
 const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<PublicNavigationProps>();
   const dispatch = useDispatch();
+  const FCMToken = useSelector((state: RootState) => state.auth.FCMToken);
+  console.log('FCMToken in register screen', FCMToken);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,15 +63,23 @@ const CreateAccountScreen: React.FC = () => {
       return;
     }
 
+    if (!FCMToken) {
+      Alert.alert('Error', 'FCM Token is missing. Please try again.');
+      return;
+    }
+
     setEmailError('');
     setPasswordError('');
     setConfirmPasswordError('');
     setLoading(true);
 
     try {
-      const response = await registerUser(email, password);
+      const response = await registerUser(email, password, FCMToken);
+      console.log('responseee in account screen', response);
       const userId = response?.data?.userId;
-      const token = response?.data?.token;
+
+      const token = response?.data?.authToken;
+      console.log('tokeenn in account', token);
 
       dispatch(setUserId(userId));
       dispatch(setToken(token));
@@ -89,15 +107,15 @@ const CreateAccountScreen: React.FC = () => {
         <View style={styles.inputContainer}>
           <CustomInputField
             lefticon="email"
-            lefticonStyle={{ fontSize: 20 }}
+            lefticonStyle={{fontSize: 20}}
             placeholder="Enter email"
-            placeholderTextStyle={{ color: '#888' }}
+            placeholderTextStyle={{color: '#888'}}
             textStyle={{
               fontSize: 16,
               marginVertical: 10,
               color: Colors.darkBlue,
             }}
-            containerStyle={{ backgroundColor: '#EFEFEF' }}
+            containerStyle={{backgroundColor: '#EFEFEF'}}
             value={email}
             onChangeText={text => {
               setEmail(text);
@@ -113,23 +131,23 @@ const CreateAccountScreen: React.FC = () => {
           {emailError ? (
             <TCText style={styles.errorText}>{emailError}</TCText>
           ) : (
-            <View style={{ height: 20 }} />
+            <View style={{height: 20}} />
           )}
           <CustomInputField
             ref={passwordInputRef}
             lefticon="lock"
             rightIcon={showPassword ? 'visibility-off' : 'visibility'}
-            lefticonStyle={{ fontSize: 20 }}
+            lefticonStyle={{fontSize: 20}}
             onRightIconPress={() => setShowPassword(!showPassword)}
             placeholder="Create your password"
-            placeholderTextStyle={{ color: '#888' }}
+            placeholderTextStyle={{color: '#888'}}
             secureTextEntry={!showPassword}
             textStyle={{
               fontSize: 16,
               color: Colors.darkBlue,
               marginVertical: 10,
             }}
-            containerStyle={{ backgroundColor: '#EFEFEF' }}
+            containerStyle={{backgroundColor: '#EFEFEF'}}
             value={password}
             onChangeText={text => setPassword(text)}
             returnKeyType="next"
@@ -147,13 +165,13 @@ const CreateAccountScreen: React.FC = () => {
           ref={confirmPasswordInputRef}
           lefticon="lock"
           rightIcon={showConfirmPassword ? 'visibility-off' : 'visibility'}
-          lefticonStyle={{ fontSize: 20 }}
+          lefticonStyle={{fontSize: 20}}
           onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
           placeholder="Confirm your password"
-          placeholderTextStyle={{ color: '#888' }}
+          placeholderTextStyle={{color: '#888'}}
           secureTextEntry={!showConfirmPassword}
-          textStyle={{ fontSize: 16, color: Colors.darkBlue, marginVertical: 10 }}
-          containerStyle={{ backgroundColor: '#EFEFEF' }}
+          textStyle={{fontSize: 16, color: Colors.darkBlue, marginVertical: 10}}
+          containerStyle={{backgroundColor: '#EFEFEF'}}
           value={confirmPassword}
           onChangeText={text => setConfirmPassword(text)}
           returnKeyType="done"
@@ -167,7 +185,7 @@ const CreateAccountScreen: React.FC = () => {
           <ActivityIndicator
             size="large"
             color={Colors.darkBlue}
-            style={{ marginVertical: 20 }}
+            style={{marginVertical: 20}}
           />
         ) : (
           <CustomButton
