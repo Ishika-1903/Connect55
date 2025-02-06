@@ -184,14 +184,19 @@ const IndividualChatScreen = () => {
         const parsedMessage = JSON.parse(payload.toString());
 
         // Ignore messages originating from the server
-        if (parsedMessage.origin === 'server') return;
-
-        console.log('Message received:', parsedMessage);
+        // if (parsedMessage.origin === 'server') return;
+console.log('chatId',chatId);
+console.log('parsedchatId',parsedMessage.chatId)
+        console.log('Message received in handle message:', parsedMessage);
         if (parsedMessage.chatId === chatId) {
+          console.log('Message received in handle message2:', parsedMessage);
+
           const newMessage = {
+            messageId:parsedMessage.messageId,
             chatId: parsedMessage.chatId || Date.now().toString(),
             message: parsedMessage.content || '',
             isSender: parsedMessage.senderId === userId,
+            seenBy:[userId],
             timestamp: new Date(
               parsedMessage.timestamp || Date.now(),
             ).toLocaleTimeString([], {
@@ -206,6 +211,16 @@ const IndividualChatScreen = () => {
                 }
               : null,
           };
+          console.log('newmssg',newMessage);
+          console.log('parsmssg',parsedMessage);
+          console.log("senderIdPublish",parsedMessage.senderId.toString());
+          console.log('userIdPublish',userId);
+          //acknowledgement
+          // Use destructuring to exclude 'timestamp' when passing the object
+          // if(parsedMessage.senderId !== userId){
+          // const { timestamp, ...messageWithoutTimestamp } = newMessage;
+          // mqttClient.publish(`chat/${chatId}/messages`, JSON.stringify(messageWithoutTimestamp));
+          // }
           setMessages(prevMessages => {
             return [...prevMessages, newMessage];
           });
@@ -252,10 +267,12 @@ const IndividualChatScreen = () => {
                 senderId: string | null;
                 timestamp: string | number | Date;
                 media: string;
+                seenBy: string[]; 
               }) => ({
                 id: msg.messageId,
                 message: msg.content,
                 isSender: msg.senderId === userId,
+                seenBy:msg.seenBy,
                 timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -294,6 +311,8 @@ const IndividualChatScreen = () => {
             senderId: string | null;
             timestamp: string | number | Date;
             media: string;
+            seenBy: string[]; 
+
           }) => ({
             id: msg.messageId,
             message: msg.content,
@@ -302,6 +321,7 @@ const IndividualChatScreen = () => {
               hour: '2-digit',
               minute: '2-digit',
             }),
+            seenBy:msg.seenBy,
             media: msg.media
               ? {
                   uri: msg.media.startsWith('/')
@@ -355,12 +375,12 @@ const IndividualChatScreen = () => {
         // console.log('mqtt')
 
         const messagePayload = JSON.stringify({
-          // messageId: `${chatId}_${Date.now()}`,
+          messageId: `${chatId}_${Date.now()}`,
           chatId: chatId,
           content: inputText,
           senderId: userId,
           timestamp: new Date().toISOString(),
-          media: photo || null,
+          media: photo ? {...photo} : null,
           origin: 'client',
         });
 
@@ -368,7 +388,12 @@ const IndividualChatScreen = () => {
           'messagePayload in indivualaddddddd screeeeeeennnenenenen:',
           messagePayload,
         );
-        mqttClient.publish(`chat/${chatId}/messages`, messagePayload);
+        if(photo!=null){
+          console.log('photo')
+          sendMessage(chatId, userId, inputText, photo);
+        }else{
+          console.log('sendmqtt')
+        mqttClient.publish(`chat/${chatId}/messages`, messagePayload);}
       }
       // console.log('chatId in handlesend', chatId)
       setInputText('');
