@@ -6,7 +6,10 @@ import {styles} from './LoginScreen.styles';
 import {Colors} from '../../utils/constants/colors';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {AppStackParamList} from '../../routes/navigation/navigators';
+import {
+  AppStackParamList,
+  PrivateNavigatorParamList,
+} from '../../routes/navigation/navigators';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {Strings} from '../../utils/constants/strings';
 import CustomButton from '../../components/buttons/CustomButton';
@@ -33,6 +36,7 @@ const LoginScreen: React.FC = () => {
   const [isConnected, setIsConnected] = useState(true);
 
   const navigation = useNavigation<PublicNavigationProps>();
+
   const passwordInputRef = useRef<TextInput>(null);
 
   const FCMToken = useSelector((state: RootState) => state.auth.FCMToken);
@@ -59,6 +63,11 @@ const LoginScreen: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const tokens = TokenService.getAllTokens();
+    const users = TokenService.getAllUsers();
+  }, []);
+
   const handleSignIn = async () => {
     if (!isConnected) {
       setPasswordError(
@@ -69,7 +78,7 @@ const LoginScreen: React.FC = () => {
     try {
       setEmailError('');
       setPasswordError('');
-      console.log('1');
+
       if (!email.trim()) {
         setEmailError('* Email is required');
         return;
@@ -78,22 +87,19 @@ const LoginScreen: React.FC = () => {
         setPasswordError('Password is required');
         return;
       }
-      console.log('11111');
+
       const response = await login(email, password);
       console.log('Login Successful:', response.data);
       const userId = response.data.data.userId;
       const token = response.data.data.token;
-      console.log('token in login', token);
-      console.log('useerrId in login', userId);
 
       await AsyncStorage.setItem('userToken', token);
       await AsyncStorage.setItem('userId', userId.toString());
 
-      const saveResult = TokenService.addToken(token, FCMToken);
-      console.log('Realm Save Result:', saveResult.message);
 
+      const saveResult = TokenService.addToken(token, FCMToken);
       const storedUserId = await AsyncStorage.getItem('userId');
-      console.log('Stored UserId:', storedUserId);
+      console.log('login screenuser id', storedUserId);
 
       dispatch(setUserId(userId));
       dispatch(setToken(token));
@@ -111,7 +117,6 @@ const LoginScreen: React.FC = () => {
       } else {
         setEmailError('An error occurred. Please try again.');
       }
-      console.log('Error during login:', error);
     }
   };
 

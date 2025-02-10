@@ -18,55 +18,46 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import CustomBottomTab from '../../components/bottomTab/CustomBottomTab';
 import {skills} from '../../utils/dummyData';
 import {PrivateNavigatorParamList} from '../../routes/navigation/navigators';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {Strings} from '../../utils/constants/strings';
 import {getUserData} from '../../apis/auth/auth';
-import {useSelector} from 'react-redux';
-import {RootState} from '../../controller/store';
 import {baseURLPhoto} from '../../apis/apiConfig';
 import {styles} from './ProfileScreen.styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {getInitials} from '../../utils/utils';
+import {getInitials, shuffleArray} from '../../utils/utils';
 
 import TokenService from '../../utils/database/Token/TokenService';
 
 type ProfileScreenNavigationProp =
   StackNavigationProp<PrivateNavigatorParamList>;
-
+ 
 const ProfilePage: React.FC = () => {
-  const userId = useSelector((state: RootState) => state.auth.userId);
-  const route = useRoute();
 
-  // const token = useSelector((state: RootState) => state.auth.token);
-  // console.log('tokennn', token);
+  const route = useRoute();
   const {chatUserId} = route.params || {};
   const {searchUserId} = route.params || {};
-  console.log('hiii from profile', chatUserId);
-  console.log('chatuserid in profile', chatUserId);
-  console.log('searchUserId in profile', searchUserId);
-  const storedUserId = AsyncStorage.getItem('userId');
-
-  // const idToFetch = searchUserId || chatUserId || userId;
 
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [visible, setVisible] = React.useState(false);
   const [showAllSkills, setShowAllSkills] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(5);
 
   const [loading, setLoading] = useState(true);
   const [idToFetch, setIdToFetch] = useState<string | null>(null);
+  const [shuffledSkills, setShuffledSkills] = useState<string[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      setUserId(storedUserId);
+    };
+  
+    fetchUserId();
+  }, []); 
 
   const showModal = () => {
-    console.log('Show modal called');
     setVisible(true);
-  };
-
-  const hideModal = () => {
-    console.log('Hide modal called');
-    setVisible(false);
   };
 
   const [userData, setUserData] = useState<{
@@ -109,7 +100,6 @@ const ProfilePage: React.FC = () => {
         const response = await getUserData(idToFetch);
         if (response.success) {
           setUserData(response.data);
-          console.log('response in profileeeee', JSON.stringify(response.data));
           const saveResult = TokenService.addUser(
             response.data.name,
             response.data.bio,
@@ -118,7 +108,6 @@ const ProfilePage: React.FC = () => {
             response.data.workLocation,
             response.data.skills,
           );
-          console.log('Realm Save Profile Result:', saveResult.message);
         } else {
           console.error('Failed to fetch user data:', response.message);
         }
@@ -131,20 +120,6 @@ const ProfilePage: React.FC = () => {
     fetchUserData();
   }, [idToFetch]);
 
-  const shuffleArray = (array: string[]) => {
-    let shuffledArray = [...array];
-    for (let i = shuffledArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffledArray[i], shuffledArray[j]] = [
-        shuffledArray[j],
-        shuffledArray[i],
-      ];
-    }
-    return shuffledArray;
-  };
-
-  const [shuffledSkills, setShuffledSkills] = useState<string[]>([]);
-
   useEffect(() => {
     setShuffledSkills(shuffleArray(skills));
   }, []);
@@ -152,20 +127,6 @@ const ProfilePage: React.FC = () => {
   const profilePictureURL = userData?.profilePicture
     ? `${baseURLPhoto}${userData.profilePicture}`
     : null;
-
-  const tabs = [
-    {icon: 'home', onPress: () => navigation.navigate('Home')},
-    {icon: 'search', onPress: () => navigation.navigate('Search')},
-    // {icon: 'add-box', onPress: () => console.log('Home pressed')},
-    {
-      icon: 'email',
-      onPress: () => navigation.navigate('ChatList'),
-      unreadCount: unreadCount,
-    },
-    {icon: 'campaign', onPress: () => navigation.navigate('Announcement')},
-    {icon: 'person', onPress: () => navigation.navigate('Profile')},
-  ];
-
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -200,7 +161,6 @@ const ProfilePage: React.FC = () => {
                 style={styles.profileImage}
               />
             ) : (
-              // <Image source={Icons.dummyProfile} style={styles.profileImage} />
               <View style={styles.intialsProfile}>
                 <Text style={styles.initials}>
                   {getInitials(userData?.name || 'Unknown')}
@@ -237,28 +197,6 @@ const ProfilePage: React.FC = () => {
           <TCText style={styles.location}>
             📍 {userData?.workLocation || 'N/A'}
           </TCText>
-
-          {/* <View style={styles.actionButtons}>
-            {idToFetch !== userId && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() =>
-                  navigation.navigate('IndividualChatScreen', {
-                    chatUserId: idToFetch,
-                  })
-                }>
-                <MaterialIcons
-                  name="message"
-                  size={24}
-                  color={Colors.darkBlue}
-                  style={styles.icon}
-                />
-                <TCText style={styles.actionButtonText}>
-                  {Strings.MESSAGE}
-                </TCText>
-              </TouchableOpacity>
-            )}
-          </View> */}
 
           <View style={styles.skillsBox}>
             <TCText style={styles.sectionTitle}>SKILLS</TCText>
@@ -315,8 +253,7 @@ const ProfilePage: React.FC = () => {
             text: 'Confirm',
             onPress: async () => {
               try {
-                await AsyncStorage.removeItem('token');
-                console.log('Token removed successfully');
+                await AsyncStorage.removeItem('userToken');
                 navigation.reset({
                   index: 0,
                   routes: [{name: 'Public', params: {screen: 'Login'}}],
@@ -339,15 +276,6 @@ const ProfilePage: React.FC = () => {
           },
         ]}
       />
-
-      {/* <CustomBottomTab
-        tabs={tabs}
-        style={{
-          color: 'white',
-          position: 'absolute',
-          bottom: 0,
-        }}
-      /> */}
     </View>
   );
 };

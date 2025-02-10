@@ -7,6 +7,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import ChatMessage from '../../components/chatComponent/ChatMessage';
 import {Colors} from '../../utils/constants/colors';
@@ -15,7 +16,7 @@ import Icons from '../../utils/constants/Icons';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import CommonChatHeader from '../../components/chatComponent/ChatHeader';
 import {Strings} from '../../utils/constants/strings';
-import {getChatByChatId, sendMessage} from '../../apis/chat/chat';
+import {getChatByChatId} from '../../apis/chat/chat';
 import {RootState} from '../../controller/store';
 import {useSelector} from 'react-redux';
 import {baseURLPhoto} from '../../apis/apiConfig';
@@ -38,6 +39,7 @@ const GroupChatScreen = () => {
   const [headerProfilePictures, setHeaderProfilePictures] = useState<string[]>(
     [],
   );
+  const [isFirstLoaded, setIsFirstLoaded] = useState(false);
   const [groupName, setGroupName] = useState<string | null>(null);
   const [groupIcon, setGroupIcon] = useState<string | null>(null);
   const [photo, setPhoto] = useState<{
@@ -46,13 +48,13 @@ const GroupChatScreen = () => {
     type: string;
     size: number;
   } | null>(null);
-
-  // const [participants, setParticipants] = useState([]);
+  const [isFetchingOlderMessages, setIsFetchingOlderMessages] = useState(false);
 
   const [participants, setParticipants] = useState<Participant[]>([]);
 
   const {chatId} = route.params;
-  const CHAT_TOPIC = 'chat/6756cbb47b19daf3ef9e7048/messages';
+  // const CHAT_TOPIC = 'chat/6756cbb47b19daf3ef9e7048/messages';
+  const CHAT_TOPIC = 'chat/+/messages';
   const userId = useSelector((state: RootState) => state.auth.userId);
 
   useEffect(() => {
@@ -63,22 +65,22 @@ const GroupChatScreen = () => {
     }
 
     const handleMessage = (topic: string, payload: Buffer) => {
-      if (topic === CHAT_TOPIC) {
+      if (topic.startsWith('chat/') && topic.endsWith('/messages')) {
         const parsedMessage = JSON.parse(payload.toString());
+
+        if (parsedMessage.origin === 'server') return;
+        console.log('Message received:', parsedMessage);
+
         const sender = participants.find(
           (participant: {userId: string}) =>
             participant.userId === parsedMessage.senderId,
         );
 
-        console.log('Sender:', sender);
+
 
         const profilePicture = sender?.profilePicture
           ? {uri: `${baseURLPhoto}${sender.profilePicture}`}
           : Icons.dummyProfile;
-
-        console.log('Sender photo:', profilePicture);
-        console.log('Participants:', participants);
-        console.log('Parsed Sender ID:', parsedMessage.senderId);
         const newMessage = {
           id: parsedMessage.messageId || Date.now().toString(),
           message: parsedMessage.content || '',
@@ -114,7 +116,7 @@ const GroupChatScreen = () => {
     });
 
     return () => {
-      mqttClient.unsubscribe(CHAT_TOPIC, err => {
+      mqttClient.unsubscribe(CHAT_TOPIC, (err: Error | null) => {
         if (err) {
           console.error('Unsubscribe error:', err);
         }
@@ -123,33 +125,100 @@ const GroupChatScreen = () => {
     };
   }, [userId]);
 
+  // const fetchOlderMessages = async () => {
+  //   if (isFetchingOlderMessages || !messages.length) return;
+  //   try {
+  //     setIsFetchingOlderMessages(true);
+  //     const response = await getChatByChatId(chatId, messages[0]?.id, 5);
+  //     console.log('response in group chat', response.data);
+  //     if (response?.data?.messages?.length) {
+  //       const {messages} = response.data;
+
+  //       const processedMessages = messages.map(
+  //         (msg: {
+  //           messageId: any;
+  //           content: any;
+  //           senderId: string | null;
+  //           timestamp: string | number | Date;
+  //           media: string;
+  //         }) => ({
+  //           id: msg.messageId,
+  //           message: msg.content,
+  //           isSender: msg.senderId === userId,
+  //           timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
+  //             hour: '2-digit',
+  //             minute: '2-digit',
+  //           }),
+  //           media: msg.media
+  //             ? {
+  //                 uri: msg.media.startsWith('/')
+  //                   ? `${baseURLPhoto}${msg.media}`
+  //                   : msg.media,
+  //               }
+  //             : null,
+  //         }),
+  //       );
+
+  //       console.log(
+  //         'Fetched Messages (First 5):',
+  //         processedMessages.slice(0, 5),
+  //       );
+
+  //       setMessages(prevMessages => {
+  //         return [...processedMessages, ...prevMessages];
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching chat details in individual:', error);
+  //   } finally {
+  //     setIsFetchingOlderMessages(false);
+  //   }
+  // };
+
+  const fetchOlderMessages = async () => {
+    if (isFetchingOlderMessages || !messages.length) return;
+  
+    try {
+      setIsFetchingOlderMessages(true);
+      const response = await getChatByChatId(chatId, messages[0]?.id, 5);
+  
+      if (response?.data?.messages?.length) {
+        const processedMessages = response.data.messages.map(msg => ({
+          id: msg.messageId,
+          message: msg.content,
+          isSender: msg.senderId === userId,
+          timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        }));
+  
+        setMessages(prevMessages => [...processedMessages, ...prevMessages]);
+      }
+    } catch (error) {
+      console.error('Error fetching chat details:', error);
+    } finally {
+      setIsFetchingOlderMessages(false);
+    }
+  };
+  
+
   const handleSendMessage = async () => {
     if (!userId || (inputText.trim() === '' && !photo)) return;
 
     try {
-      const response = await sendMessage(chatId, userId, inputText, photo);
-
-      const newMessage = {
-        id: response.data.messageId,
-        message: inputText,
-        isSender: true,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        media: photo ? {...photo} : null,
-      };
-
       const mqttClient = getMqttClient();
       if (mqttClient) {
         const messagePayload = JSON.stringify({
-          messageId: response.data.messageId,
+          //messageId: response.data.messageId,
+          chatId: chatId,
           content: inputText,
           senderId: userId,
           timestamp: new Date().toISOString(),
           media: photo || null,
+          origin: 'client',
         });
-        mqttClient.publish(CHAT_TOPIC, messagePayload);
+        mqttClient.publish(`chat/${chatId}/messages`, messagePayload);
       }
 
       setInputText('');
@@ -161,8 +230,10 @@ const GroupChatScreen = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
     const fetchChatDetails = async () => {
       try {
+        if (!isMounted) return;
         const response = await getChatByChatId(chatId);
         if (response?.data) {
           const {messages, participants, groupName, groupIcon} = response.data;
@@ -212,7 +283,26 @@ const GroupChatScreen = () => {
       }
     };
     fetchChatDetails();
-  }, [chatId, userId]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [chatId]);
+
+  const debounce = (func: Function, delay: number) => {
+    let timer: NodeJS.Timeout;
+    return (...args: any) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => func(...args), delay);
+    };
+  };
+
+  const handleFlatlist = debounce(() => {
+    if (!isFirstLoaded) {
+      fetchOlderMessages();
+      setIsFirstLoaded(true);
+    }
+  }, 500);
 
   useEffect(() => {
     const showListener = Keyboard.addListener('keyboardDidShow', () =>
@@ -249,7 +339,9 @@ const GroupChatScreen = () => {
           <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={item => item.id}
+            // keyExtractor={item => item.id}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            onEndReached={handleFlatlist}
             renderItem={({item}) => (
               <ChatMessage
                 message={item.message}
@@ -260,6 +352,23 @@ const GroupChatScreen = () => {
               />
             )}
             contentContainerStyle={styles.messageList}
+            onScroll={({nativeEvent}) => {
+              if (
+                nativeEvent.contentOffset.y <= 0 &&
+                !isFetchingOlderMessages
+              ) {
+                fetchOlderMessages();
+              }
+            }}
+            ListHeaderComponent={
+              isFetchingOlderMessages ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#0000ff"
+                  style={{marginVertical: 10}}
+                />
+              ) : null
+            }
             keyboardShouldPersistTaps="handled"
           />
           <View

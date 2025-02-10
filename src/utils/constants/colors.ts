@@ -6,6 +6,3 @@ export const Colors = {
   darkGray: '#888',
 };
 
-// export const storageKey = {
-  authToken:'token'
-//}

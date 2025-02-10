@@ -1,35 +1,16 @@
-// import mqtt from 'mqtt';
 import {apiClient} from '../apiConfig';
-
-// const brokerUrl = 'mqtt://test.mosquitto.org';
-// const mqttClient = mqtt.connect(brokerUrl);
-
-// mqttClient.on('connect', () => {
-//   console.log('Connected to MQTT broker');
-// });
-// export {mqttClient};
-
-// export const createChat = async (chatData: CreateChatRequest): Promise<any> => {
-//   try {
-//     const response = await apiClient.post(`/chat/create-chat`, chatData);
-//     console.log('chat data', response);
-//     return response.data;
-//   } catch (error: any) {
-//     console.log('Error creating chat:', error);
-//   }
-// };
 
 export const createChat = async (
   type: string,
   groupName: string,
   participants: string[],
   adminId: string,
-  // groupIcon: {
-  //     uri: string;
-  //     name: string;
-  //     type: string;
-  //     size: number;
-  //   } | null,
+  groupIcon: {
+      uri: string;
+      name: string;
+      type: string;
+      size: number;
+    } | null,
 ): Promise<any> => {
   try {
     const formData = new FormData();
@@ -37,13 +18,14 @@ export const createChat = async (
     formData.append('groupName', groupName);
     formData.append('participants', JSON.stringify(participants));
     formData.append('adminId', adminId);
-    // if (groupIcon && groupIcon.uri) {
-    //   formData.append('profilePicture', {
-    //     uri: groupIcon.uri,
-    //     type: groupIcon.type || 'image/jpg',
-    //     name: groupIcon.name || 'profile_picture.jpg',
-    //   });
-    // }
+    if (groupIcon && groupIcon.uri) {
+      formData.append('profilePicture', {
+        uri: groupIcon.uri,
+        type: groupIcon.type || 'image/jpg',
+        name: groupIcon.name || 'profile_picture.jpg',
+      });
+    }
+    console.log('formdata in creating', formData)
     const response = await apiClient.post(`/chat/create-chat`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -66,21 +48,9 @@ export const getChatByUserId = async (userId: string) => {
     const response = await apiClient.get(`/chat/${userId}`);
     return response.data;
   } catch (error: any) {
-    console.log('Error creating chat:', error);
-    throw new Error(error.response?.data?.error || 'An error occurred');
+    console.log('error', error);
   }
 };
-
-// export const getChatByChatId = async (chatId: string) => {
-//   try {
-//     const response = await apiClient.get(`/chat-data/${chatId}`);
-//     console.log('getChatByChatId', JSON.stringify(response));
-//     return response.data;
-//   } catch (error: any) {
-//     console.log('Error creating chat:', error);
-//     throw new Error(error.response?.data?.error || 'An error occurred');
-//   }
-// };
 
 export const getChatByChatId = async (
   chatId: string,
@@ -155,13 +125,13 @@ export const updateGroup = async (
     formData.append('addMembers', JSON.stringify(addMembers));
     formData.append('removeMembers', JSON.stringify(removeMembers));
     formData.append('groupAdminIds', JSON.stringify(groupAdminIds));
-    if (groupIcon && groupIcon.uri) {
-      formData.append('groupIcon', {
-        uri: groupIcon.uri,
-        type: groupIcon.type || 'image/jpg',
-        name: groupIcon.name || 'profile_picture.jpg',
-      });
-    }
+    // if (groupIcon && groupIcon.uri) {
+    //   formData.append('groupIcon', {
+    //     uri: groupIcon.uri,
+    //     type: groupIcon.type || 'image/jpg',
+    //     name: groupIcon.name || 'profile_picture.jpg',
+    //   });w
+    // }
     const response = await apiClient.patch('/chat/group/update', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

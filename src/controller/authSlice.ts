@@ -6,6 +6,7 @@ type AuthState = {
   chatId: string | null;
   chatUserId: string | null;
   FCMToken: (string | null)[];
+  isLoggedIn: boolean;
 };
 const initialState: AuthState = {
   token: null,
@@ -13,6 +14,7 @@ const initialState: AuthState = {
   chatId: null,
   chatUserId: null,
   FCMToken: [],
+  isLoggedIn: false,
 };
 
 const authSlice = createSlice({
@@ -21,23 +23,19 @@ const authSlice = createSlice({
   reducers: {
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload;
-      console.log('Token saved in Redux slice:', state.token);
+      state.isLoggedIn = true;
     },
     setUserId: (state, action: PayloadAction<string>) => {
       state.userId = action.payload;
-      console.log('UserId saved in Redux slice:', state.userId);
     },
     setChatId: (state, action: PayloadAction<string>) => {
       state.chatId = action.payload;
-      console.log('ChatId saved in Redux slice:', state.chatId);
     },
     setChatUserId: (state, action: PayloadAction<string>) => {
       state.chatUserId = action.payload;
-      console.log('ChatUserId saved in Redux slice:', state.chatUserId);
     },
     setFCMToken: (state, action: PayloadAction<string>) => {
       state.FCMToken.push(action.payload);
-      console.log('FCMToken saved in Redux slice:', state.FCMToken);
     },
   },
 });

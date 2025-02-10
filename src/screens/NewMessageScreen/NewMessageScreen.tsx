@@ -23,7 +23,7 @@ import {
   getChatByChatId,
   getChatByUserId,
 } from '../../apis/chat/chat';
-import { styles } from './NewMessageScreen.styles';
+import {styles} from './NewMessageScreen.styles';
 
 type User = {
   userId: string;
@@ -59,9 +59,11 @@ const NewMessageScreen: React.FC = () => {
     setSearchResults([]);
   };
 
+  
+
   const handleChatPress = async (userIdToChat: string) => {
     setSelectedUser(userIdToChat);
-    console.log('Selected User ID:', userIdToChat);
+  
 
     if (userIdToChat) {
       try {
@@ -80,12 +82,9 @@ const NewMessageScreen: React.FC = () => {
           );
 
           if (chatExists) {
-            console.log('Chat already created. Chat ID:', chatExists._id);
-
             const chatDetails = await getChatByChatId(chatExists._id);
 
             if (chatDetails) {
-              console.log('Existing Chat Details:', chatDetails);
               Alert.alert(
                 'Chat Already Exists',
                 `This chat already exists. Chat ID: ${chatExists._id}`,
@@ -107,14 +106,11 @@ const NewMessageScreen: React.FC = () => {
           [userId, userIdToChat],
           '',
         );
-
         if (response) {
-          console.log('New Chat Created. Chat ID:', response.data.chatId);
           Alert.alert(
             'Chat Created',
             'A new one-to-one chat has been created.',
           );
-
           navigation.navigate('IndividualChatScreen', {
             chatId: response.data.chatId,
             chatUserId: userIdToChat,
@@ -190,26 +186,28 @@ const NewMessageScreen: React.FC = () => {
       <FlatList
         data={searchResults}
         keyExtractor={item => item.userId}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            onPress={() => handleChatPress(item.userId)}
-            style={styles.chatItem}>
-            <Image
-              source={
-                item.profilePicture
-                  ? {uri: `${baseURLPhoto}${item.profilePicture}`}
-                  : Icons.dummyProfile
-              }
-              style={styles.profilePicture}
-            />
-            <View style={styles.chatDetails}>
-              <TCText style={styles.name}>{item.name || 'Unnamed'}</TCText>
-              <TCText style={styles.bio}>
-                {item.bio || 'No bio available'}
-              </TCText>
-            </View>
-          </TouchableOpacity>
-        )}
+        renderItem={({item}) => {
+          return (
+            <TouchableOpacity
+              onPress={() => handleChatPress(item.userId)}
+              style={styles.chatItem}>
+              <Image
+                source={
+                  item.profilePicture
+                    ? {uri: `${baseURLPhoto}${item.profilePicture}`}
+                    : Icons.dummyProfile
+                }
+                style={styles.profilePicture}
+              />
+              <View style={styles.chatDetails}>
+                <TCText style={styles.name}>{item.name || 'Unnamed'}</TCText>
+                <TCText style={styles.bio}>
+                  {item.bio || 'No bio available'}
+                </TCText>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={
           <TCText style={styles.noResultsText}>
@@ -220,6 +218,5 @@ const NewMessageScreen: React.FC = () => {
     </View>
   );
 };
-
 
 export default NewMessageScreen;

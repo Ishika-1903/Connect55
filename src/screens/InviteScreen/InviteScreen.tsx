@@ -48,7 +48,6 @@ const InviteScreen: React.FC = () => {
         );
 
         if (result === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Permission granted after request');
           fetchContacts();
         } else {
           console.log('Permission denied');

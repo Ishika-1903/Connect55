@@ -113,10 +113,6 @@ const SearchScreen = () => {
                   style={styles.chatItem}
                   onPress={() => {
                     setSearchUserId(item.userId);
-                    console.log(
-                      'Navigating to Profile with userId:',
-                      searchUserId,
-                    );
                     navigation.navigate('Profile', {searchUserId: item.userId});
                   }}>
                   <Image

@@ -66,8 +66,6 @@ const CreatePostScreen = ({navigation}) => {
       caption,
       tags,
     };
-
-    console.log('Post Data:', postData);
     Alert.alert('Post Created Successfully!');
     navigation.goBack();
   };

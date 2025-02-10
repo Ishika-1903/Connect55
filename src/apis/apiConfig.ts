@@ -3,13 +3,14 @@ import store from '../controller/store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:9000/api/v1',
+  baseURL: 'https://4d51-103-15-65-83.ngrok-free.app/api/v1',
+  // baseURL: 'http://localhost:9000/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-export const baseURLPhoto = 'http://localhost:9000/api/v1';
+export const baseURLPhoto = 'https://4d51-103-15-65-83.ngrok-free.app';
 
 export const saveToken = async (token: string) => {
   try {
@@ -37,13 +38,12 @@ const checkSavedToken = async () => {
 
 const getToken = () => {
   const state = store.getState();
-  console.log('state.auth.token', state.auth.token);
   return state.auth.token;
 };
 
 apiClient.interceptors.request.use(
   async config => {
-    const token = getToken();
+    const token = await AsyncStorage.getItem('userToken');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -60,12 +60,12 @@ apiClient.interceptors.response.use(
     return response;
   },
   async error => {
-    console.error('Response error:', error);
+    console.log('Response error:', error);
 
     if (error.response) {
       const backendMessage = error.response.data?.message;
       if (backendMessage) {
-        console.error('Backend error message:', backendMessage);
+        console.log('Backend error message:', backendMessage);
         return Promise.reject(backendMessage);
       }
     }

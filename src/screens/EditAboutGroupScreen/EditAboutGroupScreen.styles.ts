@@ -16,6 +16,7 @@ export const styles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
     },
+
     heading: {
       fontSize: 20,
       color: Colors.darkBlue,
@@ -88,9 +89,9 @@ export const styles = StyleSheet.create({
       marginHorizontal: 20,
     },
     memberItem: {
-      flexDirection: 'row',
+      flexDirection: 'row', // Ensures items are aligned in a row
       alignItems: 'center',
-      justifyContent: 'space-between', 
+      justifyContent: 'space-between', // Distributes elements evenly
       paddingHorizontal: 15,
       paddingVertical: 10,
       borderBottomWidth: 1,
@@ -178,7 +179,7 @@ export const styles = StyleSheet.create({
       fontSize: 30,
       fontWeight: 'bold',
       color: Colors.darkBlue,
-      marginRight: 10,
+      marginRight: 20,
       alignSelf: 'center',
     },
     modalOverlay: {
@@ -202,6 +203,8 @@ export const styles = StyleSheet.create({
       paddingVertical: 5,
       paddingHorizontal: 10,
       borderRadius: 5,
+      position:'absolute',
+      right:70,
     },
     adminToggleText: {
       color: Colors.white,

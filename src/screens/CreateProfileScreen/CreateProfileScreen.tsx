@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CustomInputField from '../../components/inputField/CustomInputField';
@@ -33,6 +35,7 @@ import {styles} from './CreateProfileScreen.styles';
 import {RootState} from '../../controller/store';
 import {useSelector} from 'react-redux';
 import {baseURLPhoto} from '../../apis/apiConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type CreateProfileScreenNavigationProp = StackNavigationProp<
   PrivateNavigatorParamList,
@@ -73,17 +76,33 @@ const CreateProfileScreen = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const userId = useSelector((state: RootState) => state.auth.userId);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      console.log('profile screen user Id:', storedUserId);
+      setUserId(storedUserId);
+    };
+  
+    fetchUserId();
+  }, []); 
 
   const deviceTokens = useSelector((state: RootState) => state.auth.FCMToken);
 
   const [userEmail, setUserEmail] = useState('');
 
+  const nameRef = useRef<TextInput>(null);
+  const bioRef = useRef<TextInput>(null);
+  const designationDropdownRef = useRef(null);
+  const departmentDropdownRef = useRef(null);
+  const locationRef = useRef<TextInput>(null);
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (!userId) {
-        console.error('User ID is missing in Profile Screen');
+        // console.error('User ID is missing in Profile Screen');
         return;
       }
 
@@ -118,7 +137,9 @@ const CreateProfileScreen = () => {
       }
     };
 
-    fetchUserData();
+    if (userId) {
+      fetchUserData();
+    }
   }, [userId]);
 
   const handleCameraLaunch = () => {
@@ -264,7 +285,7 @@ const CreateProfileScreen = () => {
 
       console.log('Profile updated successfully:', updatedProfile);
 
-      navigation.navigate('Private', {screen: 'Home'});
+      navigation.navigate('Private', {screen: 'HomeTabs'});
     } catch (error) {
       console.error(error);
     } finally {
@@ -273,16 +294,10 @@ const CreateProfileScreen = () => {
   };
 
   const handleChangePassword = async () => {
-    console.log('Changing password:', {
-      currentPassword,
-      newPassword,
-      confirmNewPassword,
-    });
     if (newPassword !== confirmNewPassword) {
       console.error("Passwords don't match!");
       return;
     }
-    console.log('Password changed successfully.');
     setIsChangePasswordVisible(false);
   };
 
@@ -330,16 +345,20 @@ const CreateProfileScreen = () => {
             <View style={styles.card}>
               <TCText style={styles.label}>Name</TCText>
               <CustomInputField
+                ref={nameRef}
                 containerStyle={styles.input}
                 textStyle={styles.placeholderTextStyle}
                 placeholder="Enter your name"
                 placeholderTextStyle={styles.placeholderColor}
                 value={name}
+                returnKeyType="next"
+                onSubmitEditing={() => bioRef.current?.focus()}
                 onChangeText={text => setName(text)}
               />
 
               <TCText style={styles.label}>Bio</TCText>
               <CustomInputField
+                ref={bioRef}
                 containerStyle={styles.input}
                 textStyle={styles.placeholderTextStyle}
                 placeholder="Tell us about yourself"
@@ -359,86 +378,104 @@ const CreateProfileScreen = () => {
               />
 
               <TCText style={styles.label}>Designation</TCText>
-              <Dropdown
-                style={styles.input}
-                containerStyle={styles.dropdownList}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-                inputSearchStyle={styles.inputSearchStyle}
-                iconStyle={styles.iconStyle}
-                search
-                data={designationsData}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Designation"
-                searchPlaceholder="Search"
-                value={selectedDesignation}
-                mode="auto"
-                onChange={item => {
-                  setSelectedDesignation(item.value);
-                }}
-                renderItem={item => {
-                  const isSelected = selectedDesignation === item.value;
-                  return (
-                    <View
-                      style={[
-                        styles.itemContainer,
-                        isSelected && {backgroundColor: 'transparent'},
-                      ]}>
-                      <Text style={styles.itemText}>{item.label}</Text>
-                      {isSelected && (
-                        <MaterialIcons
-                          name="check"
-                          size={20}
-                          color={Colors.darkBlue}
-                          style={styles.checkIcon}
-                        />
-                      )}
-                    </View>
-                  );
-                }}
-              />
+              <TouchableWithoutFeedback
+                onPress={() => designationDropdownRef.current?.open?.()}>
+                <View>
+                  <Dropdown
+                    style={styles.input}
+                    containerStyle={styles.dropdownList}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    inputSearchStyle={styles.inputSearchStyle}
+                    iconStyle={styles.iconStyle}
+                    search
+                    data={designationsData}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select Designation"
+                    searchPlaceholder="Search"
+                    value={selectedDesignation}
+                    ref={designationDropdownRef}
+                    mode="auto"
+                    onChange={item => {
+                      setSelectedDesignation(item.value);
+                      setTimeout(
+                        () => departmentDropdownRef.current?.open?.(),
+                        200,
+                      );
+                    }}
+                    renderItem={item => {
+                      const isSelected = selectedDesignation === item.value;
+                      return (
+                        <View
+                          style={[
+                            styles.itemContainer,
+                            isSelected && {backgroundColor: 'transparent'},
+                          ]}>
+                          <Text style={styles.itemText}>{item.label}</Text>
+                          {isSelected && (
+                            <MaterialIcons
+                              name="check"
+                              size={20}
+                              color={Colors.darkBlue}
+                              style={styles.checkIcon}
+                            />
+                          )}
+                        </View>
+                      );
+                    }}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
 
               <TCText style={styles.label}>Department</TCText>
-              <Dropdown
-                style={styles.input}
-                containerStyle={styles.dropdownList}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-                inputSearchStyle={styles.inputSearchStyle}
-                iconStyle={styles.iconStyle}
-                search
-                data={departmentsData}
-                labelField="label"
-                valueField="value"
-                placeholder=" Select Department"
-                searchPlaceholder="Search"
-                value={selectedDepartment}
-                mode="auto"
-                onChange={item => {
-                  setSelectedDepartment(item.value);
-                }}
-                renderItem={item => {
-                  const isSelected = selectedDepartment === item.value;
-                  return (
-                    <View
-                      style={[
-                        styles.itemContainer,
-                        isSelected && {backgroundColor: 'transparent'},
-                      ]}>
-                      <Text style={styles.itemText}>{item.label}</Text>
-                      {isSelected && (
-                        <MaterialIcons
-                          name="check"
-                          size={20}
-                          color={Colors.darkBlue}
-                          style={styles.checkIcon}
-                        />
-                      )}
-                    </View>
-                  );
-                }}
-              />
+              <TouchableWithoutFeedback
+                onPress={() => departmentDropdownRef.current?.open?.()}>
+                <View>
+                  <Dropdown
+                    ref={departmentDropdownRef}
+                    style={styles.input}
+                    containerStyle={styles.dropdownList}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    inputSearchStyle={styles.inputSearchStyle}
+                    iconStyle={styles.iconStyle}
+                    search
+                    data={departmentsData}
+                    labelField="label"
+                    valueField="value"
+                    placeholder=" Select Department"
+                    searchPlaceholder="Search"
+                    value={selectedDepartment}
+                    mode="auto"
+                    onChange={item => {
+                      setSelectedDepartment(item.value);
+                      setTimeout(() => locationRef.current?.focus(), 200);
+                    }}
+                    renderItem={item => {
+                      const isSelected = selectedDepartment === item.value;
+                      return (
+                        <View
+                          style={[
+                            styles.itemContainer,
+                            isSelected && {backgroundColor: 'transparent'},
+                          ]}>
+                          <Text style={styles.itemText}>{item.label}</Text>
+                          {isSelected && (
+                            <MaterialIcons
+                              name="check"
+                              size={20}
+                              color={Colors.darkBlue}
+                              style={styles.checkIcon}
+                            />
+                          )}
+                        </View>
+                      );
+                    }}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+
               <TCText style={styles.label}>Skills</TCText>
               <MultiSelect
                 style={[styles.input, {marginBottom: 10}]}
@@ -486,6 +523,7 @@ const CreateProfileScreen = () => {
                 Work Location
               </TCText>
               <CustomInputField
+                ref={locationRef}
                 containerStyle={styles.input}
                 textStyle={styles.placeholderTextStyle}
                 placeholder="Enter your work location"

@@ -22,7 +22,6 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {registerUser} from '../../apis/auth/auth';
 import {setToken, setUserId} from '../../controller/authSlice';
 import {saveToken} from '../../apis/apiConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RootState} from '../../controller/store';
 
 type PublicNavigationProps = NativeStackNavigationProp<AppStackParamList>;
@@ -31,7 +30,6 @@ const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<PublicNavigationProps>();
   const dispatch = useDispatch();
   const FCMToken = useSelector((state: RootState) => state.auth.FCMToken);
-  console.log('FCMToken in register screen', FCMToken);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,11 +73,9 @@ const CreateAccountScreen: React.FC = () => {
 
     try {
       const response = await registerUser(email, password, FCMToken);
-      console.log('responseee in account screen', response);
       const userId = response?.data?.userId;
 
       const token = response?.data?.authToken;
-      console.log('tokeenn in account', token);
 
       dispatch(setUserId(userId));
       dispatch(setToken(token));

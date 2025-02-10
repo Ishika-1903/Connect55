@@ -1,4 +1,5 @@
 export type PrivateNavigatorParamList = {
+  HomeTabs: undefined; 
   Home: undefined;
   Search: undefined;
   Announcement: undefined;
@@ -31,7 +32,6 @@ export type AppStackParamList = {
   //Private: {count: number};
   Private: undefined;
   Public: undefined;
-  Tabs: undefined;
 };
 
 export type BottomTabStackParamList = {

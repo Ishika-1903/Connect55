@@ -35,7 +35,6 @@ export const login = async (email: string, password: string) => {
     return response;
   } catch (error: any) {
     console.error('error of login', error);
-    throw error;
   }
 };
 
@@ -70,13 +69,13 @@ export const updateUserProfile = async (
     formData.append('bio', bio);
     formData.append('department', department);
     formData.append('skills', JSON.stringify(skills));
-    // if (profilePicture && profilePicture.uri) {
-    //   formData.append('profilePicture', {
-    //     uri: profilePicture.uri,
-    //     type: profilePicture.type || 'image/jpg',
-    //     name: profilePicture.name || 'profile_picture.jpg',
-    //   });
-    // }
+    if (profilePicture && profilePicture.uri) {
+      formData.append('profilePicture', {
+        uri: profilePicture.uri,
+        type: profilePicture.type || 'image/jpg',
+        name: profilePicture.name || 'profile_picture.jpg',
+      });
+    }
     formData.append('workLocation', workLocation);
     formData.append('designation', designation);
     formData.append('deviceTokens', JSON.stringify(deviceTokens));
@@ -101,7 +100,7 @@ export const updateUserProfile = async (
 export const searchUsers = async (query: string) => {
   try {
     const response = await apiClient.get(`/users/search-users`, {
-      params: {query},
+      params: {query, limit: 15},
     });
 
     return response;

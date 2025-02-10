@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -25,6 +25,8 @@ import {Strings} from '../../utils/constants/strings';
 import {setChatUserId} from '../../controller/authSlice';
 import GroupChatItem from './GroupChatItem';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import TokenService from '../../utils/database/Token/TokenService';
+import {getMqttClient} from '../../utils/mqttClient';
 
 const ChatList: React.FC = () => {
   const navigation = useNavigation();
@@ -37,8 +39,9 @@ const ChatList: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedChat, setSelectedChat] = useState<any>(null);
-
   const userId = useSelector((state: RootState) => state.auth.userId);
+  const realm = new Realm();
+  const CHAT_TOPIC = 'chat/+/messages';
 
   const handleLongPress = (chat: any) => {
     setSelectedChat(chat);
@@ -75,6 +78,66 @@ const ChatList: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const mqttClient = getMqttClient();
+
+    if (!mqttClient) {
+      console.warn('MQTT client is not connected yet!');
+      return;
+    }
+
+    const handleChatListMessage = (topic: string, payload: Buffer) => {
+      console.log('Received payload:', payload.toString());
+
+      if (topic.startsWith('chat/') && topic.endsWith('/messages')) {
+        const parsedMessage = JSON.parse(payload.toString());
+        console.log('chatId:', parsedMessage.chatId);
+        if (parsedMessage.origin === 'server') return;
+
+        console.log('New message in chat list:', parsedMessage);
+
+        setChatData(prevChatData => {
+          return prevChatData.map(chat => {
+            if (chat._id === parsedMessage.chatId) {
+              const newMessages = [...chat.messages, parsedMessage];
+              return {
+                ...chat,
+                messages: newMessages,
+                lastMessage: parsedMessage.content,
+              };
+            }
+            return chat;
+          });
+        });
+      }
+    };
+
+    mqttClient.on('message', handleChatListMessage);
+
+    mqttClient.subscribe(CHAT_TOPIC, err => {
+      if (err) {
+        console.error('Subscription error in ChatList:', err);
+      } else {
+        console.log(`Subscribed to all chat topics`);
+      }
+    });
+
+    return () => {
+      mqttClient.unsubscribe(CHAT_TOPIC, (err: Error | null) => {
+        if (err) {
+          console.error('Unsubscribe error in ChatList:', err);
+        } else {
+          console.log(`Unsubscribed from all chat topics`);
+        }
+      });
+      mqttClient.removeListener('message', handleChatListMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    const chats = TokenService.getAllChats();
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       const handleGetChatByUserId = async () => {
@@ -89,12 +152,13 @@ const ChatList: React.FC = () => {
             setLoading(true);
             const response = await getChatByUserId(storedUserId);
 
-            if (response?.success) {
+            const abcd = TokenService.addChat(response.data);
+
+            if (response?.success && response.data.length > 0) {
               const chats = response.data.filter(
                 (chat: any) =>
                   chat.type === 'one-to-one' || chat.type === 'group',
               );
-              console.log('Filtered Chats:', chats);
 
               const filteredChats = chats.map((chat: any) => {
                 if (chat.type === 'one-to-one') {
@@ -107,12 +171,6 @@ const ChatList: React.FC = () => {
                       ? chat.messages[chat.messages.length - 1].messageId
                       : null;
 
-                  console.log('One-to-One Chat:', {
-                    ...chat,
-                    otherParticipant,
-                    lastMessageId,
-                  });
-
                   return {...chat, otherParticipant, lastMessageId};
                 }
 
@@ -121,20 +179,19 @@ const ChatList: React.FC = () => {
                     ? chat.messages[chat.messages.length - 1].messageId
                     : null;
 
-                console.log('Group Chat:', lastMessageId);
-
                 return {...chat, lastMessageId};
               });
 
-              console.log('Final Filtered Chats:', filteredChats);
               setChatData(filteredChats);
               setError(null);
             } else {
-              console.log('API Error:', response?.message || 'Unknown error');
+              setChatData([]);
+              setError('No chats found for the user');
             }
           }
         } catch (error: any) {
           console.log('Error fetching chats:', error.message);
+          setError(error.response?.data?.error || 'An error occurred');
         } finally {
           setLoading(false);
         }
@@ -147,8 +204,6 @@ const ChatList: React.FC = () => {
   );
 
   const filteredData = useMemo(() => {
-    console.log('Active Tab:', activeTab);
-    console.log('--------->', activeTab);
     if (activeTab === 'Pinned') {
       return chatData.filter(chat => chat.pinned);
     }
@@ -162,7 +217,6 @@ const ChatList: React.FC = () => {
             ?.toLowerCase()
             .includes(searchQuery.toLowerCase()),
       );
-      console.log('Direct Messages:', directMessages);
       return directMessages;
     }
 
@@ -346,6 +400,7 @@ const ChatList: React.FC = () => {
                         dispatch(setChatUserId(item.otherParticipant.userId));
                       }
                       console.log('Last Message ID:', item.lastMessageId);
+
                       navigation.navigate('IndividualChatScreen', {
                         chatId: item._id,
                         lastMessageId: item.lastMessageId,
@@ -418,6 +473,7 @@ const ChatList: React.FC = () => {
                       handleLongPress(item);
                     }}
                     onPress={() => {
+                      
                       navigation.navigate('GroupChatScreen', {
                         chatId: item._id,
                       });
@@ -442,7 +498,7 @@ const ChatList: React.FC = () => {
             ListEmptyComponent={
               error ? (
                 <View style={styles.noChatsContainer}>
-                  <Text style={styles.noChatsText}>{error}</Text>
+                  <Text style={styles.noChatsText}>No chats found</Text>
                   <Text style={[styles.noChatsText, {fontStyle: 'italic'}]}>
                     Be the first to start the conversation
                   </Text>
@@ -555,7 +611,7 @@ const styles = StyleSheet.create({
   },
   noChatsText: {
     fontSize: 18,
-    color: Colors.darkBlue,
+    color: Colors.darkGray,
     textAlign: 'center',
     marginTop: 20,
   },

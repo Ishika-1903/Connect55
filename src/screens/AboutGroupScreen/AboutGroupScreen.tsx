@@ -66,7 +66,7 @@ const AboutGroupScreen: React.FC = () => {
             response.data;
           if (groupAdmin.includes(userId)) {
             setIsAdmin(true);
-            console.log('Current user is an admin');
+
           } else {
             setIsAdmin(false);
           }

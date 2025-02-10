@@ -22,7 +22,7 @@ import {useSelector} from 'react-redux';
 import CustomInputField from '../../components/inputField/CustomInputField';
 import {Strings} from '../../utils/constants/strings';
 import {createChat} from '../../apis/chat/chat';
-import { styles } from './NewGroupChatScreen.styles';
+import {styles} from './NewGroupChatScreen.styles';
 
 type SearchResultItem = {
   userId: string;
@@ -40,23 +40,18 @@ const NewGroupChatScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const userId = useSelector((state: RootState) => state.auth.userId);
 
-  useEffect(() => {
-    console.log('Updated Selected User IDs:', selectedUsers);
-  }, [selectedUsers]);
-
   const handleSelectionChange = (id: string, isSelected: boolean) => {
     setSelectedUsers(prevSelected => {
       const updated = isSelected
         ? [...prevSelected, id]
         : prevSelected.filter(userId => userId !== id);
-      console.log('Updated Selected User IDs inside function:', updated);
       return updated;
     });
   };
 
   const handleClearSearch = () => {
     setSearchText('');
-    setSearchResults([]); 
+    setSearchResults([]);
   };
 
   const handleSearch = async (query: string) => {
@@ -64,7 +59,6 @@ const NewGroupChatScreen: React.FC = () => {
     if (query.length > 0) {
       try {
         const response = await searchUsers(query);
-        console.log('Search Results:', response.data.data);
         setSearchResults(response.data.data);
       } catch (error) {
         console.error('Error fetching search results:', error);
@@ -88,7 +82,7 @@ const NewGroupChatScreen: React.FC = () => {
 
     try {
       const participants = [userId, ...selectedUsers];
-      console.log('Participants:', participants);
+
       // const groupIconData = groupIcon
       // ? {
       //     uri: groupIcon.uri,
@@ -217,7 +211,5 @@ const NewGroupChatScreen: React.FC = () => {
     </View>
   );
 };
-
-
 
 export default NewGroupChatScreen;

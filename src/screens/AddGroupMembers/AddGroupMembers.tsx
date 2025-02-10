@@ -36,11 +36,6 @@ const AddGroupMembers: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
-  const userId = useSelector((state: RootState) => state.auth.userId);
-
-  useEffect(() => {
-    console.log('Updated Selected User IDs:', selectedUsers);
-  }, [selectedUsers]);
 
   const route = useRoute();
   const {onMembersSelected} = route.params as {
@@ -68,7 +63,7 @@ const AddGroupMembers: React.FC = () => {
       const updated = isSelected
         ? [...prevSelected, id]
         : prevSelected.filter(userId => userId !== id);
-      console.log('Updated Selected User IDs inside function:', updated);
+
       return updated;
     });
   };
@@ -83,7 +78,6 @@ const AddGroupMembers: React.FC = () => {
     if (query.length > 0) {
       try {
         const response = await searchUsers(query);
-        console.log('Search Results:', response.data.data);
         setSearchResults(response.data.data);
       } catch (error) {
         console.error('Error fetching search results:', error);

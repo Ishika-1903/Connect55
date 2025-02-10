@@ -5,6 +5,8 @@ import {NavigationContainer} from '@react-navigation/native';
 import PublicNavigator from './PublicNavigator';
 import {AppStackParamList} from './navigators';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {ActivityIndicator, View} from 'react-native';
+import { Colors } from '../../utils/constants/colors';
 
 const AppNavigator = () => {
   const AppStack = createNativeStackNavigator<AppStackParamList>();
@@ -13,9 +15,11 @@ const AppNavigator = () => {
   useEffect(() => {
     const checkToken = async () => {
       try {
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await AsyncStorage.getItem('userToken');
         if (token) {
+          console.log('tokeeennnn', token);
           setIsLoggedIn(true);
+          console.log('setIsLoggedIn', token);
         } else {
           setIsLoggedIn(false);
         }
@@ -24,22 +28,22 @@ const AppNavigator = () => {
         setIsLoggedIn(false);
       }
     };
-
     checkToken();
   }, []);
 
   if (isLoggedIn === null) {
-    return null;
+    return (
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <ActivityIndicator size="large" color={Colors.darkBlue} />
+      </View>
+    );
   }
 
   return (
     <NavigationContainer>
-      <AppStack.Navigator screenOptions={{headerShown: false}}>
-        {/* {isLoggedIn ? (
-          <AppStack.Screen name="Private" component={PrivateNavigator} />
-        ) : (
-          <AppStack.Screen name="Public" component={PublicNavigator} />
-        )} */}
+      <AppStack.Navigator
+        screenOptions={{headerShown: false}}
+        initialRouteName={isLoggedIn ? 'Private' : 'Public'}>
         <AppStack.Screen name="Public" component={PublicNavigator} />
         <AppStack.Screen name="Private" component={PrivateNavigator} />
       </AppStack.Navigator>

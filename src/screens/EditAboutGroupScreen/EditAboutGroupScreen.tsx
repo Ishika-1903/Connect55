@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Modal,
   Text,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {TCText} from '../../components/text/CustomText';
@@ -98,7 +99,6 @@ const EditAboutGroupScreen: React.FC = () => {
           setParticipants(updatedParticipants);
           setInitialParticipantIds(participants.map(p => p.userId));
           if (groupIcon) {
-            console.log(groupIcon);
             setProfilePicture({
               uri: `${baseURLPhoto}${groupIcon}`,
               name: 'group_icon.jpg',
@@ -190,11 +190,6 @@ const EditAboutGroupScreen: React.FC = () => {
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
 
-  const handleLongPress = (member: Participant) => {
-    setSelectedMember(member);
-    setAdminActionVisible(true);
-  };
-
   const handleSaveGroupName = async () => {
     if (!isAdmin) return;
     try {
@@ -221,7 +216,6 @@ const EditAboutGroupScreen: React.FC = () => {
       );
 
       if (response) {
-        console.log('Group name updated successfully:', response);
         setIsGroupUpdated(true);
         setIsEditing(false);
       }
@@ -307,7 +301,6 @@ const EditAboutGroupScreen: React.FC = () => {
                 style={styles.editGroupNameInput}
                 value={groupName}
                 onChangeText={setGroupName}
-                autoFocus
               />
             </View>
           </View>
@@ -340,7 +333,7 @@ const EditAboutGroupScreen: React.FC = () => {
             )}
           </View>
 
-          {/* <FlatList
+          <FlatList
             data={participants}
             keyExtractor={item => item.userId}
             renderItem={({item}) => (
@@ -370,58 +363,7 @@ const EditAboutGroupScreen: React.FC = () => {
                       },
                     ]}>
                     <Text style={styles.adminToggleText}>
-                      {item.isAdmin ? 'Revoke from Admin' : 'Make Admin'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {!item.isAdmin && (
-                  <TCText
-                    style={styles.minusSymbol}
-                    onPress={() => handleRemoveMember(item.userId)}>
-                    -
-                  </TCText>
-                )}
-              </View>
-            )}
-            ListEmptyComponent={
-              <TCText style={styles.emptyText}>No members found</TCText>
-            }
-          /> */}
-
-          <FlatList
-            data={participants}
-            keyExtractor={item => item.userId}
-            renderItem={({item}) => (
-              <View
-                style={styles.memberItem}
-                onLongPress={() => handleLongPress(item)} // Long press handler
-              >
-                <View style={styles.memberInfo}>
-                  <Image
-                    source={item.profilePicture as any}
-                    style={styles.memberPhoto}
-                    resizeMode="cover"
-                  />
-                  <View>
-                    <TCText style={styles.memberName}>{item.name}</TCText>
-                    {item.isAdmin && (
-                      <TCText style={styles.adminTag}>{Strings.ADMIN}</TCText>
-                    )}
-                  </View>
-                </View>
-                {isAdmin && (
-                  <TouchableOpacity
-                    onPress={() => toggleAdminRights(item.userId)}
-                    style={[
-                      styles.adminToggleButton,
-                      {
-                        backgroundColor: item.isAdmin
-                          ? Colors.darkBlue
-                          : Colors.darkBlue,
-                      },
-                    ]}>
-                    <Text style={styles.adminToggleText}>
-                      {item.isAdmin ? 'Revoke from Admin' : 'Make Admin'}
+                      {item.isAdmin ? 'Revoke Admin' : 'Make Admin'}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -482,13 +424,16 @@ const EditAboutGroupScreen: React.FC = () => {
               transparent={true}
               animationType="fade"
               onRequestClose={() => setIsGroupUpdated(false)}>
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalMessage}>
-                    Group updated successfully!
-                  </Text>
+              <TouchableWithoutFeedback
+                onPress={() => setIsGroupUpdated(false)}>
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalMessage}>
+                      Group updated successfully!
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              </TouchableWithoutFeedback>
             </Modal>
           )}
         </View>
